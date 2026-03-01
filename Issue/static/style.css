@@ -1,0 +1,408 @@
+/* ─── RESET ───────────────────────────────────────── */
+/* รีเซ็ตค่าเริ่มต้นของเบราว์เซอร์ให้เหมือนกันหมด */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; } /* เลื่อนหน้าเว็บแบบนุ่มนวล */
+
+/* ─── TOKENS ──────────────────────────────────────── */
+/* ประกาศตัวแปร CSS (สี, เงา Neumorphic, ฟอนต์, ระยะเวลาแอนิเมชัน) เอาไว้เรียกใช้ซ้ำ */
+:root {
+  --bg:         #EFF1F8;
+  --surface:    #EFF1F8;
+  --sh-light:   #FFFFFF;
+  --sh-dark:    #C5C8D4;
+
+  /* ชุดเงาสไตล์ Neumorphic ขนาดต่างๆ (นูน, ยุบ) */
+  --neu-xl:  20px 20px 48px var(--sh-dark), -20px -20px 48px var(--sh-light);
+  --neu-lg:  12px 12px 28px var(--sh-dark), -12px -12px 28px var(--sh-light);
+  --neu-md:   7px  7px 16px var(--sh-dark),  -7px  -7px 16px var(--sh-light);
+  --neu-sm:   4px  4px  9px var(--sh-dark),  -4px  -4px  9px var(--sh-light);
+  --neu-in:  inset 5px 5px 11px var(--sh-dark), inset -5px -5px 11px var(--sh-light);
+
+  /* โทนสีหลักและสีข้อความ */
+  --navy:      #0B2240;
+  --blue:      #0D6EFD;
+  --blue-dim:  #1A7FFC;
+  --blue-pale: #E8F1FF;
+  --body:      #3C4C64;
+  --muted:     #8A97B0;
+  --label:     #5C6C84;
+
+  /* ฟอนต์ */
+  --fh: 'Poppins', sans-serif;
+  --fb: 'DM Sans', sans-serif;
+
+  /* ความเร็ว Transition */
+  --tf: .15s ease;
+  --tm: .25s ease;
+  --ts: .4s cubic-bezier(.34,1.56,.64,1);
+
+  /* รัศมีความโค้งมน */
+  --r-xs:  8px;
+  --r-sm:  12px;
+  --r-md:  18px;
+  --r-lg:  24px;
+  --r-xl:  32px;
+}
+
+/* ─── BASE ────────────────────────────────────────── */
+/* จัดรูปแบบพื้นฐานของหน้าเว็บ (พื้นหลัง, ตัวอักษร) */
+body {
+  font-family: var(--fb);
+  background: var(--bg);
+  color: var(--body);
+  min-height: 100vh;
+  padding-bottom: 100px;
+  overflow-x: hidden;
+}
+
+/* สร้างลวดลายพื้นหลังจางๆ (Noise pattern) */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* คอนเทนเนอร์หลักคุมความกว้างหน้าเว็บ */
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ─── HEADER ──────────────────────────────────────── */
+/* ส่วนหัวเรื่อง (Logo, Title) */
+.header {
+  padding: 52px 0 38px;
+  text-align: center;
+  animation: sDn .7s cubic-bezier(.22,1,.36,1) both; /* แอนิเมชันเลื่อนลง */
+}
+
+/* กรอบไอคอนโลโก้ */
+.emblem {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 70px; height: 70px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--neu-lg);
+  background: var(--surface);
+  margin-bottom: 18px;
+}
+.emblem svg { width: 34px; height: 34px; }
+
+/* ข้อความตัวเล็กเหนือหัวข้อหลัก */
+.eyebrow {
+  font-family: var(--fh);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 10px;
+}
+
+/* หัวข้อหลัก "KMUTNB ISSUE" */
+.h-title {
+  font-family: var(--fh);
+  font-size: clamp(30px, 6vw, 54px);
+  font-weight: 900;
+  color: var(--navy);
+  letter-spacing: -2px; line-height: 1;
+  margin-bottom: 10px;
+}
+.h-title .ac {
+  color: var(--blue); display: inline-block; position: relative;
+}
+/* ขีดเส้นใต้คำว่า ISSUE */
+.h-title .ac::after {
+  content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--blue), transparent);
+}
+
+/* คำอธิบายใต้หัวข้อ */
+.h-sub { font-size: 12.5px; color: var(--muted); font-weight: 400; letter-spacing: .3px; }
+
+/* ─── SECTION STRIPE ──────────────────────────────── */
+/* เส้นแบ่งหมวดหมู่ (Report a New Issue) */
+.stripe { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.stripe-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--blue); box-shadow: 0 0 0 3px rgba(13,110,253,.14); flex-shrink: 0;
+}
+.stripe-lbl {
+  font-family: var(--fh); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 2.8px; text-transform: uppercase; color: var(--muted);
+}
+.stripe-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--sh-dark) 0%, transparent 100%); }
+
+/* ─── CARD ────────────────────────────────────────── */
+/* กล่อง Card หลัก (ฟอร์มและฟีดปัญหา) */
+.card {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--neu-xl);
+  padding: 34px;
+  margin-bottom: 28px;
+  animation: sUp .55s .1s both; /* แอนิเมชันลอยขึ้น */
+}
+/* ดีเลย์แอนิเมชันให้ Card ฟีดขึ้นมาช้ากว่านิดนึง */
+.feed-card { animation: sUp .55s .25s both; }
+
+/* ─── FIELD ───────────────────────────────────────── */
+/* ส่วนจัดรูปแบบแต่ละกล่อง Input/Dropdown */
+.field { margin-bottom: 26px; }
+.field:last-child { margin-bottom: 0; }
+
+/* ป้ายกำกับ (Label) เหนือ Input */
+.flabel {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--fh); font-size: 11px; font-weight: 700;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--label); margin-bottom: 11px; padding-left: 2px;
+}
+.flabel-ico { font-size: 13px; opacity: .7; }
+
+/* กรอบคลุม Dropdown เอาไว้แต่งลูกศร */
+.sw { position: relative; }
+/* ลูกศรชี้ลงของ Dropdown */
+.sw::after {
+  content: ''; position: absolute; right: 17px; top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 6px solid var(--muted);
+  pointer-events: none;
+  transition: transform var(--tf), border-top-color var(--tf);
+}
+/* สลับลูกศรชี้ขึ้นและเปลี่ยนสีเมื่อคลิก Dropdown */
+.sw:focus-within::after { transform: translateY(-50%) rotate(180deg); border-top-color: var(--blue); }
+
+/* สไตล์พื้นฐานของ Input (Select และ Textarea) เป็นแบบหลุม (Inset shadow) */
+.neu-sel, .neu-ta {
+  width: 100%;
+  background: var(--surface); border: none;
+  box-shadow: var(--neu-in);
+  font-family: var(--fb); font-size: 14px; font-weight: 400;
+  color: var(--body); outline: none;
+  transition: box-shadow var(--tm), color var(--tf);
+}
+/* สไตล์เฉพาะของ Dropdown */
+.neu-sel {
+  border-radius: var(--r-sm);
+  padding: 14px 42px 14px 17px;
+  appearance: none; -webkit-appearance: none; cursor: pointer;
+}
+/* เอฟเฟกต์ตอนกด Input */
+.neu-sel:focus { box-shadow: var(--neu-in), 0 0 0 3px rgba(13,110,253,.12); color: var(--navy); }
+.neu-sel option { background: #fff; color: var(--body); }
+
+/* สไตล์เฉพาะของ Textarea (กล่องข้อความ) */
+.neu-ta {
+  border-radius: var(--r-sm);
+  padding: 17px 19px;
+  resize: vertical; min-height: 128px; line-height: 1.7;
+}
+.neu-ta::placeholder { color: var(--muted); }
+.neu-ta:focus { box-shadow: var(--neu-in), 0 0 0 3px rgba(13,110,253,.12); color: var(--navy); }
+
+/* จัดเรียง Dropdown ตำแหน่งให้เป็น 3 คอลัมน์ */
+.loc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* รองรับหน้าจอมือถือให้เรียงคอลัมน์เดียว */
+@media (max-width: 560px) {
+  .loc-row { grid-template-columns: 1fr; }
+  .card { padding: 22px; }
+  .header { padding: 34px 0 26px; }
+}
+
+/* ─── SUBMIT BTN ──────────────────────────────────── */
+/* คอนเทนเนอร์ปุ่ม */
+.btn-wrap { animation: sUp .6s .5s both; }
+
+/* ปุ่ม Submit หลัก */
+.btn-submit {
+  width: 100%;
+  background: var(--blue); /* พื้นหลังสีน้ำเงิน */
+  border: none;
+  border-radius: var(--r-lg); 
+  box-shadow: var(--neu-lg); 
+  font-family: var(--fh); font-size: 14.5px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: #FFFFFF; /* ตัวอักษรสีขาว */
+  padding: 21px 32px; cursor: pointer;
+  transition: box-shadow var(--tm), transform var(--tm), color var(--tf);
+  display: flex; align-items: center; justify-content: center; gap: 13px;
+  position: relative; overflow: hidden;
+}
+/* เอฟเฟกต์ตอนเอาเมาส์ชี้ */
+.btn-submit:hover {
+  box-shadow: 5px 5px 12px var(--sh-dark), -5px -5px 12px var(--sh-light);
+  transform: translateY(1px);
+}
+/* เอฟเฟกต์ตอนกดปุ่ม (ปุ่มยุบลง) */
+.btn-submit:active { 
+  box-shadow: var(--neu-in); transform: translateY(3px); 
+  color: rgba(255, 255, 255, 0.8); 
+}
+/* วงกลมรองรับไอคอน */
+.btn-ico {
+  width: 35px; height: 35px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2); 
+  display: flex; align-items: center; justify-content: center;
+  transition: transform var(--ts);
+}
+/* ไอคอนขยับเมื่อเอาเมาส์ชี้ปุ่ม */
+.btn-submit:hover .btn-ico { transform: translateX(4px) scale(1.08); }
+.btn-submit svg { width: 17px; height: 17px; stroke: #FFFFFF; stroke-width: 2.5; fill: none; }
+/* คลื่นแสงวงกลมเมื่อเอาเมาส์ชี้ */
+.btn-submit::before {
+  content: ''; position: absolute; width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%); 
+  top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
+  transition: transform .5s ease; border-radius: 50%;
+}
+.btn-submit:hover::before { transform: translate(-50%,-50%) scale(1); }
+
+/* ─── FEED TOPBAR ─────────────────────────────────── */
+/* แถบด้านบนของ Feed แสดงปัญหา */
+.feed-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
+}
+.feed-title-grp { display: flex; align-items: center; gap: 9px; }
+.feed-title { font-family: var(--fh); font-size: 15px; font-weight: 700; color: var(--navy); letter-spacing: -.3px; }
+
+/* กล่องตัวเลขและตำแหน่ง (Pill shape) */
+.pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--surface); box-shadow: var(--neu-sm);
+  border-radius: 50px; padding: 5px 13px;
+  font-family: var(--fh); font-size: 11px; font-weight: 600;
+}
+.pill-count { color: var(--blue); }
+.pill-loc   { color: var(--muted); }
+
+/* ─── ISSUE CARD ──────────────────────────────────── */
+/* กล่องแสดงปัญหาแต่ละรายการ (Item card) */
+.ic {
+  background: var(--surface); border-radius: var(--r-md);
+  box-shadow: var(--neu-sm); padding: 19px 21px; margin-bottom: 13px;
+  transition: box-shadow var(--tm), transform var(--tm);
+  position: relative; overflow: hidden;
+}
+/* เส้นขอบสีทางซ้าย (ใช้แสดงสีตาม Category) */
+.ic::before {
+  content: ''; position: absolute;
+  left: 0; top: 18%; bottom: 18%; width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--_cc, var(--blue));
+  opacity: 0; transition: opacity var(--tm);
+}
+/* เอฟเฟกต์กล่องเด้งขึ้นตอนเมาส์ชี้ */
+.ic:hover {
+  box-shadow: 10px 10px 22px var(--sh-dark), -10px -10px 22px var(--sh-light);
+  transform: translateY(-2px);
+}
+.ic:hover::before { opacity: 1; } /* แสดงเส้นขอบสี */
+
+/* ส่วนหัวของกล่องปัญหา */
+.ic-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 11px; margin-bottom: 7px;
+}
+.ic-title { font-family: var(--fh); font-size: 13.5px; font-weight: 600; color: var(--navy); line-height: 1.4; }
+
+/* ป้าย Tag หมวดหมู่ */
+.cat-badge {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 4px 11px; border-radius: 50px;
+  background: var(--surface); box-shadow: var(--neu-sm);
+  font-family: var(--fh); font-size: 9.5px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase;
+  color: var(--_cc, var(--blue));
+}
+/* จุดสีหน้า Tag หมวดหมู่ */
+.cdot { width: 6px; height: 6px; border-radius: 50%; background: var(--_cc, var(--blue)); flex-shrink: 0; }
+
+/* รายละเอียดปัญหา */
+.ic-desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin-bottom: 13px; font-weight: 300; }
+
+/* ส่วนท้ายกล่องปัญหา (ตำแหน่ง, สถานะ, เวลา) */
+.ic-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+/* Tag เล็กๆ ท้ายกล่อง */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: var(--r-xs);
+  background: var(--surface); box-shadow: var(--neu-sm);
+  font-size: 10.5px; font-weight: 500; color: var(--muted);
+}
+.tag svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0; }
+.spacer { flex: 1; min-width: 8px; } /* ดันสถานะไปชิดขวา */
+
+/* Tag สถานะ (Open, Progress, Resolved) */
+.stag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 50px;
+  background: var(--surface); box-shadow: var(--neu-sm);
+  font-family: var(--fh); font-size: 9.5px; font-weight: 700;
+  letter-spacing: .5px; text-transform: uppercase;
+}
+.sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* เส้นคั่นระหว่างรายการปัญหา */
+.feed-divider {
+  height: 1px; margin: 4px 0 14px;
+  background: linear-gradient(90deg, transparent, var(--sh-dark) 30%, var(--sh-dark) 70%, transparent);
+}
+
+/* ─── EMPTY STATE ─────────────────────────────────── */
+/* ดีไซน์ตอนที่ฟีดปัญหาว่าง (ไม่มีคนแจ้ง) */
+.empty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 46px 20px; text-align: center;
+}
+.empty-orb {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--surface); box-shadow: var(--neu-lg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; margin-bottom: 18px;
+}
+.empty-ttl { font-family: var(--fh); font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 7px; }
+.empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 270px; }
+
+/* ─── TOAST ───────────────────────────────────────── */
+/* แจ้งเตือนเด้งมุมล่างตอนส่งข้อมูลสำเร็จ */
+.toast {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(90px);
+  background: var(--surface); box-shadow: var(--neu-lg);
+  border-radius: var(--r-md); padding: 15px 26px;
+  display: flex; align-items: center; gap: 11px;
+  font-family: var(--fh); font-size: 13px; font-weight: 600;
+  color: var(--navy); z-index: 9999;
+  transition: transform var(--ts), opacity .3s ease;
+  opacity: 0; pointer-events: none; white-space: nowrap;
+}
+.toast.on { transform: translateX(-50%) translateY(0); opacity: 1; } /* คลาสที่ JS ใช้เรียก Toast ขึนมา */
+.toast-ico {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface); box-shadow: var(--neu-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+
+/* ─── VALIDATION ──────────────────────────────────── */
+/* ไฮไลท์กรอบแดงเตือนกรณีลืมกรอกข้อมูล (JS จัดการ) */
+.verr .neu-sel, .verr .neu-ta {
+  box-shadow: var(--neu-in), 0 0 0 3px rgba(239,68,68,.2);
+}
+
+/* ─── KEYFRAMES ───────────────────────────────────── */
+/* รวมแอนิเมชันเปิดหน้าเว็บ */
+@keyframes sDn {
+  from { opacity:0; transform:translateY(-22px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes sUp {
+  from { opacity:0; transform:translateY(18px); }
+  to   { opacity:1; transform:translateY(0); }
+}
