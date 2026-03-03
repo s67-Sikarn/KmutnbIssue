@@ -133,6 +133,9 @@
       <span id="toast-msg">Issue submitted!</span>
     </div>
 
+    <script id="issues-data" type="application/json">
+        {{ issues_json|safe }}
+    </script>
     <script src="{% static 'script.js' %}"></script>
 </body>
 </html>
