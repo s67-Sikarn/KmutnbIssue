@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,21 +9,48 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <link rel="stylesheet" href="{% static 'style.css' %}" />
 </head>
 
 <body>
-    
+    <!-- Auth Navigation -->
+    <div class="w-full flex justify-end p-4 fixed top-0 right-0 z-50">
+        <div class="flex gap-3">
+            {% if user.is_authenticated and user.is_staff %}
+            <a href="{% url 'Issue:dashboard' %}"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors duration-200">
+                Staff Dashboard
+            </a>
+            <form method="post" action="{% url 'logout' %}" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md shadow-sm transition-colors duration-200">
+                    Logout
+                </button>
+            </form>
+            {% elif not user.is_authenticated %}
+            <a href="{% url 'login' %}"
+                class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors duration-200">
+                Staff Login
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="wrap">
         <header class="header">
             <div class="emblem">
                 <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="20" width="36" height="22" rx="3" fill="none" stroke="#0D6EFD" stroke-width="2.5"/>
-                    <path d="M2 22 L24 6 L46 22" stroke="#0D6EFD" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    <rect x="18" y="30" width="12" height="12" rx="2" fill="none" stroke="#0D6EFD" stroke-width="2.2"/>
-                    <line x1="24" y1="30" x2="24" y2="42" stroke="#0D6EFD" stroke-width="2"/>
+                    <rect x="6" y="20" width="36" height="22" rx="3" fill="none" stroke="#0D6EFD" stroke-width="2.5" />
+                    <path d="M2 22 L24 6 L46 22" stroke="#0D6EFD" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" fill="none" />
+                    <rect x="18" y="30" width="12" height="12" rx="2" fill="none" stroke="#0D6EFD" stroke-width="2.2" />
+                    <line x1="24" y1="30" x2="24" y2="42" stroke="#0D6EFD" stroke-width="2" />
                 </svg>
             </div>
             <p class="eyebrow">King Mongkut's University of Technology North Bangkok</p>
@@ -30,7 +58,8 @@
             <p class="h-sub">Campus Issue Reporting &amp; Tracking System</p>
         </header>
 
-        <div class="card">
+        <form class="card" method="POST" action="{% url 'Issue:index' %}" id="issue-form" enctype="multipart/form-data">
+            {% csrf_token %}
             <div class="stripe">
                 <div class="stripe-dot"></div>
                 <span class="stripe-lbl">Report a New Issue</span>
@@ -42,7 +71,7 @@
                     <span class="flabel-ico">🔖</span> Issue Category
                 </label>
                 <div class="sw">
-                    <select class="neu-sel" id="cat">
+                    <select class="neu-sel" id="cat" name="category" required>
                         <option value="">Select Issue Category</option>
                         <option value="electrical">⚡ Electrical</option>
                         <option value="plumbing">🚰 Plumbing / Water</option>
@@ -60,7 +89,8 @@
                 <label class="flabel" for="desc">
                     <span class="flabel-ico">📝</span> Problem Details
                 </label>
-                <textarea class="neu-ta" id="desc" placeholder="Describe the issue — what happened, when it started, and how it affects you…"></textarea>
+                <textarea class="neu-ta" id="desc" name="desc" required
+                    placeholder="Describe the issue — what happened, when it started, and how it affects you…"></textarea>
             </div>
 
             <div class="field">
@@ -69,7 +99,7 @@
                 </label>
                 <div class="loc-row">
                     <div class="sw" id="f-bld">
-                        <select class="neu-sel" id="bld" onchange="onLocChange()">
+                        <select class="neu-sel" id="bld" name="bld" onchange="onLocChange()">
                             <option value="">🏢 Select Building</option>
                             <option value="61">Building 61</option>
                             <option value="63">Building 63</option>
@@ -78,7 +108,7 @@
                         </select>
                     </div>
                     <div class="sw" id="f-flr">
-                        <select class="neu-sel" id="flr" onchange="onLocChange()">
+                        <select class="neu-sel" id="flr" name="flr" onchange="onLocChange()">
                             <option value="">🪜 Select Floor</option>
                             <option value="1">Floor 1</option>
                             <option value="2">Floor 2</option>
@@ -86,7 +116,7 @@
                         </select>
                     </div>
                     <div class="sw" id="f-rm">
-                        <select class="neu-sel" id="rm" onchange="onLocChange()">
+                        <select class="neu-sel" id="rm" name="rm" onchange="onLocChange()">
                             <option value="">🚪 Select Room</option>
                             <option value="101">101</option>
                             <option value="102">102</option>
@@ -96,7 +126,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
 
         <div class="card feed-card" id="feed-card">
             <div class="feed-topbar">
@@ -106,11 +136,19 @@
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                     <div class="pill pill-count">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M9 11l3 3L22 4" />
+                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                        </svg>
                         <span id="feed-count">0</span>&nbsp;issues
                     </div>
                     <div class="pill pill-loc">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
                         <span id="feed-loc-text">All Locations</span>
                     </div>
                 </div>
@@ -119,20 +157,41 @@
         </div>
 
         <div class="btn-wrap">
-            <button class="btn-submit" onclick="submitIssue()">
+            <button class="btn-submit" type="submit" form="issue-form">
                 <span>Submit</span>
                 <div class="btn-ico">
-                    <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <svg viewBox="0 0 24 24">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg>
                 </div>
             </button>
         </div>
     </div>
 
     <div class="toast" id="toast">
-      <div class="toast-ico" id="toast-ico">✅</div>
-      <span id="toast-msg">Issue submitted!</span>
+        <div class="toast-ico" id="toast-ico">✅</div>
+        <span id="toast-msg">Issue submitted!</span>
     </div>
 
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for message in messages %}
+            {% if message.tags == 'error' %}
+            showToast('⚠️', "{{ message|escapejs }}");
+            {% else %}
+            showToast('✅', "{{ message|escapejs }}");
+            {% endif %}
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
+    <script id="issues-data" type="application/json">
+        {{ issues_json|safe }}
+    </script>
     <script src="{% static 'script.js' %}"></script>
 </body>
+
 </html>
