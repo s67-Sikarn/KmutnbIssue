@@ -42,6 +42,7 @@ def index(request):
             'desc': issue.desc,
             'status': issue.status,
             'time': time_str,
+            'rejection_reason': issue.rejection_reason
         })
         
     context = {
@@ -54,10 +55,18 @@ def index(request):
 @login_required
 @staff_member_required
 def dashboard(request):
-    # Fetch all issues except the ones already resolved
-    issues = Issue.objects.exclude(status='resolved').order_by('-created_at')
+    status_filter = request.GET.get('status', '')
+    
+    if status_filter:
+        issues = Issue.objects.filter(status=status_filter).order_by('-created_at')
+    else:
+        # Show all except resolved by default to keep the interface clean
+        issues = Issue.objects.exclude(status='resolved').order_by('-created_at')
+        
     context = {
         'issues': issues,
+        'current_filter': status_filter,
+        'status_choices': Issue.STATUS_CHOICES,
     }
     return render(request, 'dashboard.html', context)
 
@@ -68,12 +77,25 @@ def update_issue_status(request, issue_id):
     if request.method == 'POST':
         issue = get_object_or_404(Issue, id=issue_id)
         action = request.POST.get('action')
+        new_status = request.POST.get('status')
         
         if action == 'accept':
             issue.status = 'progress'
             issue.assigned_to = request.user
-        elif action == 'close':
-            issue.status = 'resolved'
+            messages.success(request, f'Issue #{issue.id} accepted and assigned to you.')
+        elif new_status:
+            if new_status == 'rejected':
+                reason = request.POST.get('rejection_reason', '').strip()
+                if not reason:
+                    messages.error(request, 'A rejection reason is required.')
+                    return redirect('Issue:dashboard')
+                issue.rejection_reason = reason
+            
+            if new_status == 'progress' and not issue.assigned_to:
+                issue.assigned_to = request.user
+            
+            issue.status = new_status
+            messages.success(request, f'Status for Issue #{issue.id} updated to {issue.get_status_display()}.')
             
         issue.save()
         

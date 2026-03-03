@@ -14,9 +14,11 @@ class Issue(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('open', 'Open'),
+        ('pending', 'Pending'),
         ('progress', 'In Progress'),
+        ('hold', 'On Hold'),
         ('resolved', 'Resolved'),
+        ('rejected', 'Rejected'),
     ]
 
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
@@ -25,8 +27,9 @@ class Issue(models.Model):
     bld = models.CharField(max_length=50) # Building
     flr = models.CharField(max_length=50) # Floor
     rm = models.CharField(max_length=50)  # Room
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_issues')
+    rejection_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

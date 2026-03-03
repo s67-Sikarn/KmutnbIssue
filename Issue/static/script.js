@@ -11,9 +11,11 @@ const CAT = {
 };
 
 const STATUS = {
-  open: { label: 'Open', color: '#F59E0B' },
-  progress: { label: 'In Progress', color: '#3B82F6' },
-  resolved: { label: 'Resolved', color: '#10B981' },
+  pending: { label: 'Pending', color: '#EF4444' }, // Red for Pending
+  progress: { label: 'In Progress', color: '#3B82F6' }, // Blue for In Progress
+  hold: { label: 'On Hold', color: '#F59E0B' }, // Amber/Yellow for On Hold
+  resolved: { label: 'Resolved', color: '#10B981' }, // Green for Resolved
+  rejected: { label: 'Rejected', color: '#6B7280' }, // Gray for Rejected
 };
 
 const BLDLBL = v => v === 'IT' ? 'IT Building' : v ? 'Building ' + v : '';
@@ -41,24 +43,46 @@ const SVG = {
 /* ── CARD HTML ──────────────────────────────────────────── */
 function cardHTML(issue, idx) {
   const cat = CAT[issue.category] || CAT.other;
-  const st = STATUS[issue.status] || STATUS.open;
+  const st = STATUS[issue.status] || STATUS.pending;
+
+  let rejectionHtml = '';
+  if (issue.status === 'rejected' && issue.rejection_reason) {
+    rejectionHtml = `
+      <div class="mt-3 bg-red-50 border border-red-200 p-3 rounded-md text-sm text-red-700">
+          <strong><i class="fas fa-ban mr-1"></i> Rejected:</strong> ${escapeHtml(issue.rejection_reason)}
+      </div>`;
+  }
+
+  // Basic HTML escape to prevent XSS in rendering
+  function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   return `
     <div class="ic" style="--_cc:${cat.color}; animation: sUp .35s ${idx * 0.055}s both;">
       <div class="ic-head">
-        <div class="ic-title">${cat.icon} ${issue.title}</div>
+        <div class="ic-title">${cat.icon} ${escapeHtml(issue.title)}</div>
         <div class="cat-badge"><div class="cdot"></div>${cat.label}</div>
       </div>
-      <p class="ic-desc">${issue.desc}</p>
-      <div class="ic-foot">
-        <span class="tag">${SVG.building} ${BLDLBL(issue.bld)}</span>
-        <span class="tag">${SVG.floor} ${FLRLBL(issue.flr)}</span>
-        <span class="tag">${SVG.room} ${RMLBL(issue.rm)}</span>
-        <span class="spacer"></span>
-        <span class="stag">
-          <span class="sdot" style="background:${st.color}"></span>
-          <span style="color:${st.color}">${st.label}</span>
-        </span>
-        <span class="tag">${SVG.clock} ${issue.time}</span>
+      <p class="ic-desc">${escapeHtml(issue.desc)}</p>
+      <div class="ic-foot flex-col !items-start gap-2">
+        <div class="w-full flex justify-between items-center text-xs text-gray-500">
+            <span><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" style="background-color: ${st.color}20; color: ${st.color}">
+                <span class="w-2 h-2 rounded-full mr-1.5" style="background-color: ${st.color}"></span>
+                ${st.label}
+            </span>
+        </div>
+        <div class="w-full flex justify-between items-center text-xs text-gray-400 mt-1">
+            <span><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
+        </div>
+        ${rejectionHtml}
       </div>
     </div>`;
 }
