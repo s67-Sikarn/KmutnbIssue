@@ -118,44 +118,11 @@ function onLocChange() {
   renderFeed(filtered, true);
 }
 
-/* ── SUBMIT ─────────────────────────────────────────────── */
-function submitIssue() {
-  const cat = document.getElementById('cat').value;
-  const desc = document.getElementById('desc').value.trim();
-  const bld = document.getElementById('bld').value;
-  const flr = document.getElementById('flr').value;
-  const rm = document.getElementById('rm').value;
-
-  let ok = true;
-  [['f-cat', cat], ['f-desc', desc], ['f-bld', bld], ['f-flr', flr], ['f-rm', rm]].forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el) { val ? el.classList.remove('verr') : (el.classList.add('verr'), ok = false); }
-  });
-
-  if (!ok) { showToast('⚠️', 'Please fill in all fields.'); return; }
-
-  const words = desc.split(/\s+/);
-  const title = words.slice(0, 6).join(' ') + (words.length > 6 ? '…' : '');
-
-  issues.unshift({ id: Date.now(), bld, flr, rm, category: cat, title, desc, status: 'open', time: 'Just now' });
-
-  // Reset all fields
-  ['cat', 'desc', 'bld', 'flr', 'rm'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-    const wrap = document.getElementById('f-' + id);
-    if (wrap) wrap.classList.remove('verr');
-  });
-
-  // After reset, all location fields are blank → show all issues
-  renderFeed(issues, false);
-  showToast('✅', 'Issue submitted successfully!');
-}
-
 /* ── TOAST ──────────────────────────────────────────────── */
 let _toastTimer;
 function showToast(ico, msg) {
   const el = document.getElementById('toast');
+  if (!el) return;
   document.getElementById('toast-ico').textContent = ico;
   document.getElementById('toast-msg').textContent = msg;
   el.classList.add('on');

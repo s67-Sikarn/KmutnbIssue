@@ -58,7 +58,8 @@
             <p class="h-sub">Campus Issue Reporting &amp; Tracking System</p>
         </header>
 
-        <div class="card">
+        <form class="card" method="POST" action="{% url 'Issue:index' %}" id="issue-form" enctype="multipart/form-data">
+            {% csrf_token %}
             <div class="stripe">
                 <div class="stripe-dot"></div>
                 <span class="stripe-lbl">Report a New Issue</span>
@@ -70,7 +71,7 @@
                     <span class="flabel-ico">🔖</span> Issue Category
                 </label>
                 <div class="sw">
-                    <select class="neu-sel" id="cat">
+                    <select class="neu-sel" id="cat" name="category" required>
                         <option value="">Select Issue Category</option>
                         <option value="electrical">⚡ Electrical</option>
                         <option value="plumbing">🚰 Plumbing / Water</option>
@@ -88,7 +89,7 @@
                 <label class="flabel" for="desc">
                     <span class="flabel-ico">📝</span> Problem Details
                 </label>
-                <textarea class="neu-ta" id="desc"
+                <textarea class="neu-ta" id="desc" name="desc" required
                     placeholder="Describe the issue — what happened, when it started, and how it affects you…"></textarea>
             </div>
 
@@ -98,7 +99,7 @@
                 </label>
                 <div class="loc-row">
                     <div class="sw" id="f-bld">
-                        <select class="neu-sel" id="bld" onchange="onLocChange()">
+                        <select class="neu-sel" id="bld" name="bld" onchange="onLocChange()">
                             <option value="">🏢 Select Building</option>
                             <option value="61">Building 61</option>
                             <option value="63">Building 63</option>
@@ -107,7 +108,7 @@
                         </select>
                     </div>
                     <div class="sw" id="f-flr">
-                        <select class="neu-sel" id="flr" onchange="onLocChange()">
+                        <select class="neu-sel" id="flr" name="flr" onchange="onLocChange()">
                             <option value="">🪜 Select Floor</option>
                             <option value="1">Floor 1</option>
                             <option value="2">Floor 2</option>
@@ -115,7 +116,7 @@
                         </select>
                     </div>
                     <div class="sw" id="f-rm">
-                        <select class="neu-sel" id="rm" onchange="onLocChange()">
+                        <select class="neu-sel" id="rm" name="rm" onchange="onLocChange()">
                             <option value="">🚪 Select Room</option>
                             <option value="101">101</option>
                             <option value="102">102</option>
@@ -125,7 +126,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
 
         <div class="card feed-card" id="feed-card">
             <div class="feed-topbar">
@@ -156,7 +157,7 @@
         </div>
 
         <div class="btn-wrap">
-            <button class="btn-submit" onclick="submitIssue()">
+            <button class="btn-submit" type="submit" form="issue-form">
                 <span>Submit</span>
                 <div class="btn-ico">
                     <svg viewBox="0 0 24 24">
@@ -172,6 +173,20 @@
         <div class="toast-ico" id="toast-ico">✅</div>
         <span id="toast-msg">Issue submitted!</span>
     </div>
+
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for message in messages %}
+            {% if message.tags == 'error' %}
+            showToast('⚠️', "{{ message|escapejs }}");
+            {% else %}
+            showToast('✅', "{{ message|escapejs }}");
+            {% endif %}
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
 
     <script id="issues-data" type="application/json">
         {{ issues_json|safe }}

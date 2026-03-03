@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.timesince import timesince
@@ -7,6 +8,23 @@ from django.utils import timezone
 from .models import Issue
 
 def index(request):
+    if request.method == 'POST':
+        category = request.POST.get('category')
+        desc = request.POST.get('desc')
+        bld = request.POST.get('bld')
+        flr = request.POST.get('flr')
+        rm = request.POST.get('rm')
+        
+        if not category or not desc:
+            messages.error(request, 'Category and Description are required fields.')
+        else:
+            # Generate a brief title from the description (first 6 words)
+            words = desc.split()
+            title = ' '.join(words[:6]) + ('...' if len(words) > 6 else '')
+            Issue.objects.create(category=category, title=title, desc=desc, bld=bld, flr=flr, rm=rm)
+            messages.success(request, 'Issue submitted successfully!')
+            return redirect('Issue:index')
+            
     issues = Issue.objects.all().order_by('-created_at')
     
     issues_list = []
