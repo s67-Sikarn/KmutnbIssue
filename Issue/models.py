@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Issue(models.Model):
     CATEGORY_CHOICES = [
@@ -25,6 +26,7 @@ class Issue(models.Model):
     flr = models.CharField(max_length=50) # Floor
     rm = models.CharField(max_length=50)  # Room
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_issues')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

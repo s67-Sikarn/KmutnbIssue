@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - KMUTNB Issue Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        function confirmClose(event) {
+            if (!confirm("Are you sure you want to close this issue?")) {
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-600 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-white text-xl font-bold tracking-tight">KMUTNB <span class="text-blue-200">Staff
+                            Dashboard</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-white text-sm">Logged in as: <span class="font-semibold">{{ user.username
+                            }}</span></span>
+                    <a href="/"
+                        class="text-blue-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">View
+                        Main Page</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-900">Active Issues</h1>
+            <span
+                class="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded border border-blue-400">
+                Total: {{ issues|length }}
+            </span>
+        </div>
+
+        {% if issues %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for issue in issues %}
+            <div
+                class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 flex flex-col hover:shadow-md transition">
+                <!-- Card Header -->
+                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-start bg-gray-50">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 truncate pr-2 w-48"
+                            title="{{ issue.title }}">
+                            {{ issue.title }}
+                        </h3>
+                        <p class="mt-1 max-w-2xl text-xs text-gray-500 flex items-center gap-1">
+                            <i class="fas fa-tag"></i> {{ issue.get_category_display }}
+                        </p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if issue.status == 'open' %} bg-yellow-100 text-yellow-800 
+                            {% elif issue.status == 'progress' %} bg-blue-100 text-blue-800 
+                            {% endif %}">
+                        <i
+                            class="fas {% if issue.status == 'open' %}fa-exclamation-circle{% else %}fa-spinner fa-spin{% endif %} mr-1"></i>
+                        {{ issue.get_status_display }}
+                    </span>
+                </div>
+
+                <!-- Card Body -->
+                <div class="px-4 py-5 sm:p-6 flex-grow">
+                    <div class="mb-3 flex items-center text-sm text-gray-600 gap-2">
+                        <i class="fas fa-map-marker-alt text-red-500 w-4"></i>
+                        <span class="font-medium">Bld {{ issue.bld }} | Flr {{ issue.flr }} | Rm {{ issue.rm }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md line-clamp-3" title="{{ issue.desc }}">
+                        "{{ issue.desc }}"
+                    </p>
+
+                    <div class="mt-4 flex flex-col gap-1 text-xs text-gray-400">
+                        <span><i class="far fa-clock mr-1"></i> Reported: {{ issue.created_at|timesince }} ago</span>
+                        {% if issue.assigned_to %}
+                        <span class="text-blue-500 font-medium"><i class="fas fa-user mr-1"></i> Assigned to: {{
+                            issue.assigned_to.username }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Card Footer Actions -->
+                <div class="px-4 py-4 sm:px-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+                    {% if issue.status == 'open' %}
+                    <form method="POST" action="{% url 'Issue:update_status' issue.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="accept">
+                        <button type="submit"
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                            <i class="fas fa-check mr-2"></i> Accept
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'Issue:update_status' issue.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="close">
+                        <button type="submit" onclick="confirmClose(event)"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                            <i class="fas fa-times mr-2 text-red-500"></i> Close
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
+            <i class="fas fa-check-circle text-5xl text-green-400 mb-4"></i>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">All caught up!</h3>
+            <p class="mt-1 text-sm text-gray-500">There are currently no active issues assigned to the building.</p>
+        </div>
+        {% endif %}
+    </main>
+
+</body>
+
+</html>
