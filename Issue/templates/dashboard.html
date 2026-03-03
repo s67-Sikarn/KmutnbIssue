@@ -59,7 +59,7 @@
                         class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
                         <option value="">All Active</option>
                         {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if current_filter==value %}selected{% endif %}>{{ label }}
+                        <option value="{{ value }}" {% if current_filter == value %}selected{% endif %}>{{ label }}
                         </option>
                         {% endfor %}
                     </select>
@@ -169,7 +169,7 @@
                             <select name="status" onchange="handleStatusChange(this, {{ issue.id }})"
                                 class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
                                 {% for value, label in status_choices %}
-                                <option value="{{ value }}" {% if issue.status==value %}selected{% endif %}>{{ label }}
+                                <option value="{{ value }}" {% if issue.status == value %}selected{% endif %}>{{ label }}
                                 </option>
                                 {% endfor %}
                             </select>
