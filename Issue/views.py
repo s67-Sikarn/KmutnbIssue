@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.timesince import timesince
 from django.utils import timezone
+from django.db.models import Q
 from .models import Issue
 
 def index(request):
@@ -56,6 +57,7 @@ def index(request):
 @staff_member_required
 def dashboard(request):
     status_filter = request.GET.get('status', '')
+    search_query = request.GET.get('q', '')
     
     if status_filter:
         issues = Issue.objects.filter(status=status_filter).order_by('-created_at')
@@ -63,9 +65,13 @@ def dashboard(request):
         # Show all except resolved by default to keep the interface clean
         issues = Issue.objects.exclude(status='resolved').order_by('-created_at')
         
+    if search_query:
+        issues = issues.filter(Q(title__icontains=search_query) | Q(desc__icontains=search_query))
+        
     context = {
         'issues': issues,
         'current_filter': status_filter,
+        'search_query': search_query,
         'status_choices': Issue.STATUS_CHOICES,
     }
     return render(request, 'dashboard.html', context)

@@ -120,26 +120,29 @@ function renderFeed(list, isFiltered) {
     .join('<div class="feed-divider"></div>');
 }
 
-/* ── LOCATION CHANGE ────────────────────────────────────── */
+/* ── LOCATION AND SEARCH CHANGE ─────────────────────────── */
 function onLocChange() {
   const bld = document.getElementById('bld').value;
   const flr = document.getElementById('flr').value;
   const rm = document.getElementById('rm').value;
+  const searchInput = document.getElementById('search-issue');
+  const term = searchInput ? searchInput.value.toLowerCase() : '';
 
-  // Nothing selected → show ALL issues
-  if (!bld && !flr && !rm) {
-    renderFeed(issues, false);
-    return;
-  }
+  // Filter by whichever dropdowns are filled in and search term
+  const filtered = issues.filter(i => {
+    const matchLoc = (!bld || i.bld === bld) &&
+                     (!flr || i.flr === flr) &&
+                     (!rm || i.rm === rm);
+                     
+    const matchTerm = !term || 
+                      (i.title && i.title.toLowerCase().includes(term)) || 
+                      (i.desc && String(i.desc).toLowerCase().includes(term));
+                      
+    return matchLoc && matchTerm;
+  });
 
-  // Filter by whichever dropdowns are filled in
-  const filtered = issues.filter(i =>
-    (!bld || i.bld === bld) &&
-    (!flr || i.flr === flr) &&
-    (!rm || i.rm === rm)
-  );
-
-  renderFeed(filtered, true);
+  const isFiltered = !!(bld || flr || rm || term);
+  renderFeed(filtered, isFiltered);
 }
 
 /* ── TOAST ──────────────────────────────────────────────── */

@@ -99,26 +99,26 @@
                 </label>
                 <div class="loc-row">
                     <div class="sw" id="f-bld">
-                        <select class="neu-sel" id="bld" name="bld" onchange="onLocChange()">
+                        <select class="neu-sel" id="bld" name="bld" onchange="onLocChange()" required>
                             <option value="">🏢 Select Building</option>
                             <option value="61">Building 61</option>
                             <option value="63">Building 63</option>
-                            <option value="65">Building 65</option>
+                            <option value="65\">Building 65</option>
                             <option value="IT">IT Building</option>
                         </select>
                     </div>
                     <div class="sw" id="f-flr">
-                        <select class="neu-sel" id="flr" name="flr" onchange="onLocChange()">
+                        <select class="neu-sel" id="flr" name="flr" onchange="onLocChange()" required>
                             <option value="">🪜 Select Floor</option>
                             <option value="1">Floor 1</option>
-                            <option value="2">Floor 2</option>
+                            <option value="2\">Floor 2</option>
                             <option value="3">Floor 3</option>
                         </select>
                     </div>
                     <div class="sw" id="f-rm">
-                        <select class="neu-sel" id="rm" name="rm" onchange="onLocChange()">
+                        <select class="neu-sel" id="rm" name="rm" onchange="onLocChange()" required>
                             <option value="">🚪 Select Room</option>
-                            <option value="101">101</option>
+                            <option value="101\">101</option>
                             <option value="102">102</option>
                             <option value="201">201</option>
                             <option value="301">301</option>
@@ -126,47 +126,54 @@
                     </div>
                 </div>
             </div>
+
+            <div class="btn-wrap" style="margin-top: 1rem;">
+                <button class="btn-submit" type="submit">
+                    <span>Submit</span>
+                    <div class="btn-ico">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </div>
+                </button>
+            </div>
         </form>
 
         <div class="card feed-card" id="feed-card">
-            <div class="feed-topbar">
-                <div class="feed-title-grp">
-                    <span style="font-size:18px;">🗂️</span>
-                    <span class="feed-title" id="feed-title">All Reported Issues</span>
+            <div class="feed-topbar" style="flex-direction: column; align-items: stretch; gap: 12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; width: 100%;">
+                    <div class="feed-title-grp">
+                        <span style="font-size:18px;">🗂️</span>
+                        <span class="feed-title" id="feed-title">All Reported Issues</span>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <div class="pill pill-count">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M9 11l3 3L22 4" />
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                            </svg>
+                            <span id="feed-count">0</span>&nbsp;issues
+                        </div>
+                        <div class="pill pill-loc">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <span id="feed-loc-text">All Locations</span>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                    <div class="pill pill-count">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <path d="M9 11l3 3L22 4" />
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-                        </svg>
-                        <span id="feed-count">0</span>&nbsp;issues
-                    </div>
-                    <div class="pill pill-loc">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                        </svg>
-                        <span id="feed-loc-text">All Locations</span>
-                    </div>
+                <div style="width: 100%;">
+                    <input type="text" id="search-issue" placeholder="ค้นหาปัญหา..." class="neu-sel"
+                        onkeyup="onLocChange()" style="width: 100%; font-size: 14px; padding: 10px; background: white;">
                 </div>
             </div>
             <div id="feed-body"></div>
         </div>
 
-        <div class="btn-wrap">
-            <button class="btn-submit" type="submit" form="issue-form">
-                <span>Submit</span>
-                <div class="btn-ico">
-                    <svg viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                </div>
-            </button>
-        </div>
     </div>
 
     <div class="toast" id="toast">
