@@ -1,4 +1,4 @@
-/* ── DATA ───────────────────────────────────────────────── */
+/* ── DATA ข้อมูลเบื้องต้น ───────────────────────────────────────── */
 const CAT = {
   electrical: { label: 'Electrical', color: '#F59E0B', icon: '⚡' },
   plumbing: { label: 'Plumbing', color: '#06B6D4', icon: '🚰' },
@@ -10,20 +10,23 @@ const CAT = {
   other: { label: 'Other', color: '#94A3B8', icon: '📌' },
 };
 
+// ข้อมูลสถานะ เปลี่ยน label ให้เป็นภาษาไทย
 const STATUS = {
-  pending: { label: 'Pending', color: '#EF4444' }, // Red for Pending
-  progress: { label: 'In Progress', color: '#3B82F6' }, // Blue for In Progress
-  hold: { label: 'On Hold', color: '#F59E0B' }, // Amber/Yellow for On Hold
-  resolved: { label: 'Resolved', color: '#10B981' }, // Green for Resolved
-  rejected: { label: 'Rejected', color: '#6B7280' }, // Gray for Rejected
+  pending: { label: 'Pending', color: '#10B981' }, // สีเขียวมิ้นต์เหมือนในภาพ
+  progress: { label: 'In Progress', color: '#10B981' },
+  hold: { label: 'On Hold', color: '#F59E0B' }, // สีส้ม
+  resolved: { label: 'Resolved', color: '#10B981' },
+  rejected: { label: 'Rejected', color: '#EF4444' }, // สีแดง
 };
 
+// ฟังก์ชันปรับแต่งชื่อสถานที่
 const BLDLBL = v => v === 'IT' ? 'IT Building' : v ? 'Building ' + v : '';
 const FLRLBL = v => ({ B: 'Basement', G: 'Ground Floor' }[v] || (v ? 'Floor ' + v : ''));
 const RMLBL = v => v ? 'Room ' + v : '';
 
 let issues = [];
 try {
+  // ดึงข้อมูลปัญหาจาก <script id="issues-data">
   const dataEl = document.getElementById('issues-data');
   if (dataEl && dataEl.textContent.trim()) {
     issues = JSON.parse(dataEl.textContent);
@@ -32,28 +35,63 @@ try {
   console.error("Error parsing backend issues:", e);
 }
 
-/* ── SVG HELPERS ────────────────────────────────────────── */
-const SVG = {
-  building: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  floor: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
-  room: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>`,
-  clock: `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-};
+/* ── ฟังก์ชันสร้าง UI สถานะ (TIMELINE) ───────────────────── */
+function getTimelineHTML(statusVal) {
+  let step = 1;
+  let sColor = '#10B981'; // เขียวแบบในรูป
 
-/* ── CARD HTML ──────────────────────────────────────────── */
-function cardHTML(issue, idx) {
-  const cat = CAT[issue.category] || CAT.other;
-  const st = STATUS[issue.status] || STATUS.pending;
-
-  let rejectionHtml = '';
-  if (issue.status === 'rejected' && issue.rejection_reason) {
-    rejectionHtml = `
-      <div class="mt-3 bg-red-50 border border-red-200 p-3 rounded-md text-sm text-red-700">
-          <strong><i class="fas fa-ban mr-1"></i> Rejected:</strong> ${escapeHtml(issue.rejection_reason)}
-      </div>`;
+  if (statusVal === 'progress') { step = 2; }
+  else if (statusVal === 'resolved') { step = 3; }
+  else if (statusVal === 'hold' || statusVal === 'rejected') {
+    // กรณี Hold หรือ Rejected โชว์ป้ายสถานะธรรมดา
+    sColor = (statusVal === 'rejected') ? '#EF4444' : '#F59E0B';
+    return `
+      <div class="text-[10.5px] font-semibold flex items-center justify-center gap-1.5 py-1 px-3 rounded-full border" style="color: ${sColor}; border-color: ${sColor}50; background: ${sColor}15; min-width: 80px;">
+        <i class="fas ${statusVal === 'rejected' ? 'fa-times-circle' : 'fa-pause-circle'}"></i> 
+        ${STATUS[statusVal].label}
+      </div>
+     `;
   }
 
-  // Basic HTML escape to prevent XSS in rendering
+  // คำนวณความกว้างของขีดความคืบหน้า
+  const wPercent = (step === 1) ? '0%' : (step === 2) ? '50%' : '100%';
+
+  return `
+    <div class="tl-wrapper w-full" style="color: ${sColor}">
+      <div class="tl-track-bg"></div>
+      <div class="tl-track-fill" style="width: ${wPercent}; background: currentColor;"></div>
+      <div class="tl-steps-row">
+        
+        <div class="tl-step ${step >= 1 ? 'active' : ''}">
+          <div class="tl-icon-box" style="${step >= 1 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+          </div>
+          <div class="tl-label">Pending</div>
+        </div>
+        
+        <div class="tl-step ${step >= 2 ? 'active' : ''}">
+          <div class="tl-icon-box" style="${step >= 2 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+          </div>
+          <div class="tl-label">In Progress</div>
+        </div>
+        
+        <div class="tl-step ${step >= 3 ? 'active' : ''}">
+          <div class="tl-icon-box" style="${step >= 3 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+          </div>
+          <div class="tl-label">Resolved</div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+// ฟังก์ชันสร้าง UI สำหรับแต่ละปัญหา
+function cardHTML(issue, idx) {
+  const cat = CAT[issue.category] || CAT.other;
+
+  // Check if rejected to display it in place of timeline
+  const isRejected = issue.status === 'rejected';
+
+  // ป้องกัน XSS
   function escapeHtml(unsafe) {
     if (!unsafe) return '';
     return unsafe
@@ -71,25 +109,31 @@ function cardHTML(issue, idx) {
         <div class="cat-badge"><div class="cdot"></div>${cat.label}</div>
       </div>
       <p class="ic-desc">${escapeHtml(issue.desc)}</p>
-      <div class="ic-foot flex-col !items-start gap-2">
-        <div class="w-full flex justify-between items-center text-xs text-gray-500">
-            <span><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" style="background-color: ${st.color}20; color: ${st.color}">
-                <span class="w-2 h-2 rounded-full mr-1.5" style="background-color: ${st.color}"></span>
-                ${st.label}
-            </span>
+      <!-- ตำแหน่งข้อมูลด้านล่าง พร้อม Timeline ชิดขวา -->
+      <div class="ic-foot flex-col !items-start gap-3 mt-4">
+        <div class="w-full flex justify-between items-end gap-3">
+            <div class="flex flex-col gap-1.5 min-w-0 text-xs text-gray-500">
+                <span class="truncate"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
+                <span class="truncate text-gray-400"><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
+            </div>
+            <!-- Timeline แสดงด้านขวาแทนที่สถานะแบบเก่า หรือแสดงเหตุผลถ้าถูกแคนเซิล -->
+            <div class="flex-shrink-0 pb-1 w-[260px] flex justify-end">
+                ${isRejected
+      ? `<div class="bg-red-50 border border-red-200 p-3 rounded-md text-sm text-red-700 w-full text-right leading-tight shadow-sm shrink-0">
+                      <strong><i class="fas fa-ban mr-1"></i> Rejected</strong><br>
+                      <span class="opacity-90 mt-1 block font-medium break-words whitespace-normal">${escapeHtml(issue.rejection_reason || 'No reason provided')}</span>
+                     </div>`
+      : getTimelineHTML(issue.status)}
+            </div>
         </div>
-        <div class="w-full flex justify-between items-center text-xs text-gray-400 mt-1">
-            <span><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
-        </div>
-        ${rejectionHtml}
       </div>
     </div>`;
 }
 
-/* ── RENDER FEED ────────────────────────────────────────── */
+/* ── RENDER FEED (ดึงข้อมูลแสดงผล) ────────────────────────── */
 function renderFeed(list, isFiltered) {
   document.getElementById('feed-count').textContent = list.length;
+  // แปลส่วนหัวเป็นภาษาไทย
   document.getElementById('feed-title').textContent = isFiltered ? 'Issues at Selected Location' : 'All Reported Issues';
 
   const bld = document.getElementById('bld').value;
@@ -120,7 +164,7 @@ function renderFeed(list, isFiltered) {
     .join('<div class="feed-divider"></div>');
 }
 
-/* ── LOCATION AND SEARCH CHANGE ─────────────────────────── */
+/* ── ฟังก์ชันตอบสนองการค้นหา / เลือกสถานที่ ─────────────────── */
 function onLocChange() {
   const bld = document.getElementById('bld').value;
   const flr = document.getElementById('flr').value;
@@ -128,16 +172,16 @@ function onLocChange() {
   const searchInput = document.getElementById('search-issue');
   const term = searchInput ? searchInput.value.toLowerCase() : '';
 
-  // Filter by whichever dropdowns are filled in and search term
+  // กรองปัญหาตาม โลเคชั่น และ คำค้นหา
   const filtered = issues.filter(i => {
     const matchLoc = (!bld || i.bld === bld) &&
-                     (!flr || i.flr === flr) &&
-                     (!rm || i.rm === rm);
-                     
-    const matchTerm = !term || 
-                      (i.title && i.title.toLowerCase().includes(term)) || 
-                      (i.desc && String(i.desc).toLowerCase().includes(term));
-                      
+      (!flr || i.flr === flr) &&
+      (!rm || i.rm === rm);
+
+    const matchTerm = !term ||
+      (i.title && i.title.toLowerCase().includes(term)) ||
+      (i.desc && String(i.desc).toLowerCase().includes(term));
+
     return matchLoc && matchTerm;
   });
 
@@ -145,7 +189,7 @@ function onLocChange() {
   renderFeed(filtered, isFiltered);
 }
 
-/* ── TOAST ──────────────────────────────────────────────── */
+/* ── TOAST แจ้งเตือน ─────────────────────────────────────── */
 let _toastTimer;
 function showToast(ico, msg) {
   const el = document.getElementById('toast');
@@ -157,5 +201,5 @@ function showToast(ico, msg) {
   _toastTimer = setTimeout(() => el.classList.remove('on'), 3500);
 }
 
-/* ── INIT: show all issues immediately on page load ──────── */
+/* ── INIT: ดึงข้อมูลตอนเปิดหน้า ───────────────────────────────── */
 renderFeed(issues, false);
