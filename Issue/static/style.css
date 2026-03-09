@@ -779,3 +779,24 @@ body::before {
 .tl-step.active .tl-label {
   color: currentColor;
 }
+
+.tl-timestamp {
+  font-size: 0.7rem;
+  color: #94A3B8;
+  font-family: var(--fb);
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+/* --- Expandable Details --- */
+.ic.expanded .ic-timeline-container {
+  max-height: 400px !important;
+  opacity: 1 !important;
+}
+
+.ic.expanded .ic-chevron {
+  transform: rotate(180deg);
+}

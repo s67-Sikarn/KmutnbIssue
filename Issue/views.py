@@ -50,7 +50,10 @@ def index(request):
             'desc': issue.desc,
             'status': issue.status,
             'time': time_str,
-            'rejection_reason': issue.rejection_reason
+            'rejection_reason': issue.rejection_reason,
+            'created_at_time': timezone.localtime(issue.created_at).strftime('%b %d, %Y | %H:%M') if issue.created_at else '',
+            'in_progress_at_time': timezone.localtime(issue.in_progress_at).strftime('%b %d, %Y | %H:%M') if issue.in_progress_at else '',
+            'resolved_at_time': timezone.localtime(issue.resolved_at).strftime('%b %d, %Y | %H:%M') if issue.resolved_at else '',
         })
         
     context = {
@@ -98,6 +101,7 @@ def update_issue_status(request, issue_id):
         if action == 'accept':
             # รับเรื่องปัญหา -> เปลี่ยนเป็น In Progress
             issue.status = 'progress'
+            issue.in_progress_at = timezone.now()
             issue.assigned_to = request.user
             messages.success(request, f'Issue #{issue.id} accepted and assigned to you.')
         elif action == 'reject':
@@ -112,6 +116,7 @@ def update_issue_status(request, issue_id):
         elif action == 'complete':
             # ปัญหาได้รับการแก้ไขเรียบร้อย
             issue.status = 'resolved'
+            issue.resolved_at = timezone.now()
             if not issue.assigned_to:
                 issue.assigned_to = request.user
             messages.success(request, f'Issue #{issue.id} is marked as resolved.')

@@ -36,21 +36,33 @@ try {
 }
 
 /* ── ฟังก์ชันสร้าง UI สถานะ (TIMELINE) ───────────────────── */
-function getTimelineHTML(statusVal) {
+function getTimelineHTML(issue) {
+  const statusVal = issue.status;
   let step = 1;
-  let sColor = '#10B981'; // เขียวแบบในรูป
+  let sColor = '#9CA3AF'; // Pending/Neutral color
 
-  if (statusVal === 'progress') { step = 2; }
-  else if (statusVal === 'resolved') { step = 3; }
-  else if (statusVal === 'hold' || statusVal === 'rejected') {
-    // กรณี Hold หรือ Rejected โชว์ป้ายสถานะธรรมดา
-    sColor = (statusVal === 'rejected') ? '#EF4444' : '#F59E0B';
-    return `
-      <div class="text-[10.5px] font-semibold flex items-center justify-center gap-1.5 py-1 px-3 rounded-full border" style="color: ${sColor}; border-color: ${sColor}50; background: ${sColor}15; min-width: 80px;">
-        <i class="fas ${statusVal === 'rejected' ? 'fa-times-circle' : 'fa-pause-circle'}"></i> 
-        ${STATUS[statusVal].label}
-      </div>
-     `;
+  let step3Label = 'Resolved';
+  let step3StatusClass = 'status-resolved';
+  let step3Time = issue.resolved_at_time || '';
+
+  if (statusVal === 'progress') {
+    step = 2;
+    sColor = '#3B82F6'; // In Progress
+  }
+  else if (statusVal === 'resolved') {
+    step = 3;
+    sColor = '#10B981'; // Done
+  }
+  else if (statusVal === 'rejected') {
+    step = 3;
+    sColor = '#EF4444'; // Red for Rejected
+    step3Label = 'Rejected';
+    step3StatusClass = 'status-rejected';
+  }
+  else if (statusVal === 'hold') {
+    // Keep hold standard or orange
+    step = 2;
+    sColor = '#F59E0B';
   }
 
   // คำนวณความกว้างของขีดความคืบหน้า
@@ -62,22 +74,30 @@ function getTimelineHTML(statusVal) {
       <div class="tl-track-fill" style="width: ${wPercent}; background: currentColor;"></div>
       <div class="tl-steps-row">
         
-        <div class="tl-step ${step >= 1 ? 'active' : ''}">
+        <div class="tl-step status-pending ${step >= 1 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 1 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+             ${step >= 1 ? '<i class="fas fa-circle" style="font-size: 6px;"></i>' : ''}
           </div>
           <div class="tl-label">Pending</div>
+          <div class="tl-timestamp">${issue.created_at_time || '-'}</div>
         </div>
         
-        <div class="tl-step ${step >= 2 ? 'active' : ''}">
+        <div class="tl-step status-progress ${step >= 2 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 2 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+              ${step >= 2 && statusVal !== 'hold' ? '<i class="fas fa-spinner" style="font-size: 8px;"></i>' : ''}
+              ${step >= 2 && statusVal === 'hold' ? '<i class="fas fa-pause" style="font-size: 8px;"></i>' : ''}
           </div>
-          <div class="tl-label">In Progress</div>
+          <div class="tl-label">${statusVal === 'hold' ? 'On Hold' : 'In Progress'}</div>
+          <div class="tl-timestamp">${issue.in_progress_at_time || '-'}</div>
         </div>
         
-        <div class="tl-step ${step >= 3 ? 'active' : ''}">
+        <div class="tl-step ${step3StatusClass} ${step >= 3 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 3 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
+              ${step >= 3 && statusVal === 'resolved' ? '<i class="fas fa-check" style="font-size: 9px;"></i>' : ''}
+              ${step >= 3 && statusVal === 'rejected' ? '<i class="fas fa-times" style="font-size: 9px;"></i>' : ''}
           </div>
-          <div class="tl-label">Resolved</div>
+          <div class="tl-label">${step3Label}</div>
+          <div class="tl-timestamp">${step3Time || '-'}</div>
         </div>
 
       </div>
@@ -89,7 +109,16 @@ function cardHTML(issue, idx) {
   const cat = CAT[issue.category] || CAT.other;
 
   // Check if rejected to display it in place of timeline
-  const isRejected = issue.status === 'rejected';
+  const statusVal = issue.status;
+  const isRejected = statusVal === 'rejected';
+
+  let sColor = '#9CA3AF';
+  let statusLabel = 'Pending';
+
+  if (statusVal === 'progress') { sColor = '#3B82F6'; statusLabel = 'In Progress'; }
+  else if (statusVal === 'resolved') { sColor = '#10B981'; statusLabel = 'Resolved'; }
+  else if (statusVal === 'rejected') { sColor = '#EF4444'; statusLabel = 'Rejected'; }
+  else if (statusVal === 'hold') { sColor = '#F59E0B'; statusLabel = 'On Hold'; }
 
   // ป้องกัน XSS
   function escapeHtml(unsafe) {
@@ -103,7 +132,7 @@ function cardHTML(issue, idx) {
   }
 
   return `
-    <div class="ic" style="--_cc:${cat.color}; animation: sUp .35s ${idx * 0.055}s both;">
+    <div class="ic group cursor-pointer" style="--_cc:${cat.color}; animation: sUp .35s ${idx * 0.055}s both;" onclick="this.classList.toggle('expanded')">
       <div class="ic-head">
         <div class="ic-title">${cat.icon} ${escapeHtml(issue.title)}</div>
         <div class="cat-badge"><div class="cdot"></div>${cat.label}</div>
@@ -111,19 +140,32 @@ function cardHTML(issue, idx) {
       <p class="ic-desc">${escapeHtml(issue.desc)}</p>
       <!-- ตำแหน่งข้อมูลด้านล่าง พร้อม Timeline ชิดขวา -->
       <div class="ic-foot flex-col !items-start gap-3 mt-4">
-        <div class="w-full flex justify-between items-end gap-3">
+        <div class="w-full flex justify-between items-center gap-3">
             <div class="flex flex-col gap-1.5 min-w-0 text-xs text-gray-500">
                 <span class="truncate"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
                 <span class="truncate text-gray-400"><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
             </div>
-            <!-- Timeline แสดงด้านขวาแทนที่สถานะแบบเก่า หรือแสดงเหตุผลถ้าถูกแคนเซิล -->
-            <div class="flex-shrink-0 pb-1 w-[260px] flex justify-end">
-                ${isRejected
-      ? `<div class="bg-red-50 border border-red-200 p-3 rounded-md text-sm text-red-700 w-full text-right leading-tight shadow-sm shrink-0">
-                      <strong><i class="fas fa-ban mr-1"></i> Rejected</strong><br>
-                      <span class="opacity-90 mt-1 block font-medium break-words whitespace-normal">${escapeHtml(issue.rejection_reason || 'No reason provided')}</span>
-                     </div>`
-      : getTimelineHTML(issue.status)}
+            
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="text-[11px] font-semibold flex items-center justify-center gap-1.5 py-1 px-3 rounded-full border" style="color: ${sColor}; border-color: ${sColor}50; background: ${sColor}15; min-width: 80px;">
+                    ${statusLabel}
+                </div>
+                <div class="w-6 h-6 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 transition-colors group-hover:bg-gray-100">
+                    <i class="fas fa-chevron-down text-gray-400 text-[10px] ic-chevron transition-transform duration-300"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="ic-timeline-container w-full overflow-hidden transition-all duration-300 max-h-0 opacity-0">
+            <div class="pt-4 border-t border-gray-100 mt-2">
+                <div class="flex justify-center w-full px-2">
+                    ${getTimelineHTML(issue)}
+                </div>
+                ${isRejected ? `
+                 <div class="bg-red-50 border border-red-200 p-2 mt-4 rounded-md text-[11px] text-red-700 w-full text-center leading-tight shadow-sm">
+                  <strong><i class="fas fa-ban mr-1"></i> Reason:</strong>
+                  <span class="opacity-90 font-medium break-words whitespace-normal">${escapeHtml(issue.rejection_reason || 'No reason provided')}</span>
+                 </div>` : ''}
             </div>
         </div>
       </div>
