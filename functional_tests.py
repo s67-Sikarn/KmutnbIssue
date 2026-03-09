@@ -1,10 +1,15 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.contrib.auth.models import User
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+
+
+
+from Issue.models import Issue 
 
 FFoptions = Options()
 FFservice = Service(executable_path="/snap/bin/geckodriver")
@@ -71,3 +76,79 @@ class IssueReportTest(StaticLiveServerTestCase):
         self.assertIn("Flr 3", feed_text)
         self.assertIn("male_restroom_1", feed_text)
     
+class StaffDashboardTest(StaticLiveServerTestCase):
+
+    def setUp(self):
+        self.browser = webdriver.Firefox(options=FFoptions, service=FFservice)
+
+        # สร้าง staff user สำหรับฟ้าใส
+        self.staff_user = User.objects.create_user(
+            username="fahsai",
+            password="testpass123"
+        )
+        self.staff_user.is_staff = True
+        self.staff_user.save()
+
+        # สร้าง issue ที่สมชายแจ้งไว้ก่อนหน้า
+        self.issue = Issue.objects.create(
+            title="ฝาชักโครกหัก",
+            category="plumbing",
+            desc="ฝาชักโครกหัก",
+            bld="81",
+            flr="3",
+            rm="male_restroom_1",
+            status="pending"
+        )
+
+    def tearDown(self):
+        self.browser.quit()
+
+    def wait_for_text(self, text, timeout=15):
+        wait = WebDriverWait(self.browser, timeout)
+        wait.until(lambda d: text in d.find_element(By.TAG_NAME, "body").text)
+
+    def test_staff_can_login_and_update_issue_status(self):
+
+        # ฟ้าใสเข้าหน้าหลัก
+        self.browser.get(self.live_server_url)
+
+        # ฟ้าใสกด Staff Login
+        self.browser.find_element(By.LINK_TEXT, "Staff Login").click()
+
+        # ฟ้าใสกรอก username และ password
+        self.browser.find_element(By.NAME, "username").send_keys("fahsai")
+        self.browser.find_element(By.NAME, "password").send_keys("testpass123")
+
+        # ฟ้าใสกด Sign in
+        self.browser.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+
+        # หลัง login ฟ้าใสถูกส่งกลับมาหน้าแรก
+        self.wait_for_text("KMUTNB ISSUE")
+
+        # ฟ้าใสเห็นปุ่ม Staff Dashboard
+        dashboard_button = self.browser.find_element(By.LINK_TEXT, "Staff Dashboard")
+        self.assertTrue(dashboard_button.is_displayed())
+
+        # ฟ้าใสกด Staff Dashboard
+        dashboard_button.click()
+
+        # ฟ้าใสเข้าสู่หน้า Staff Dashboard
+        self.wait_for_text("Issue Management")
+
+        # ฟ้าใสพบปัญหาฝาชักโครกหักที่สมชายรายงาน
+        body_text = self.browser.find_element(By.TAG_NAME, "body").text
+        self.assertIn("ฝาชักโครกหัก", body_text)
+        self.assertIn("Pending", body_text)
+
+        # ฟ้าใสตรวจสอบแล้วและกด Accept
+        accept_button = self.browser.find_element(
+            By.XPATH,
+            f"//form[contains(@action, '{self.issue.id}')]//button[contains(., 'Accept')]"
+        )
+        accept_button.click()
+
+        # สถานะเปลี่ยนเป็น In Progress
+        self.wait_for_text("In Progress")
+
+        body_text = self.browser.find_element(By.TAG_NAME, "body").text
+        self.assertIn("In Progress", body_text)
