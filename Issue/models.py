@@ -1,5 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.utils.timesince import timesince
+from django.utils import timezone
 
 class Issue(models.Model):
     # ตัวเลือกหมวดหมู่ปัญหาที่มีให้ผู้ใช้เลือก
@@ -40,3 +46,36 @@ class Issue(models.Model):
     def __str__(self):
         # แสดงชื่อวัตถุในระบบแอดมินหรือตอนทำ debug ให้เป็นหัวข้อปัญหา
         return self.title
+
+    def to_dict(self):
+        now = timezone.now()
+        time_str = f"{timesince(self.created_at, now)} ago" if self.created_at else "Just now"
+        return {
+            'id': self.id,
+            'bld': self.bld,
+            'flr': self.flr,
+            'rm': self.rm,
+            'category': self.category,
+            'title': self.title,
+            'desc': self.desc,
+            'status': self.status,
+            'time': time_str,
+            'rejection_reason': self.rejection_reason,
+            'created_at_time': timezone.localtime(self.created_at).strftime('%b %d, %Y | %H:%M') if self.created_at else '',
+            'in_progress_at_time': timezone.localtime(self.in_progress_at).strftime('%b %d, %Y | %H:%M') if self.in_progress_at else '',
+            'resolved_at_time': timezone.localtime(self.resolved_at).strftime('%b %d, %Y | %H:%M') if self.resolved_at else '',
+        }
+
+@receiver(post_save, sender=Issue)
+def announce_issue_update(sender, instance, created, **kwargs):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        'issues_group',
+        {
+            'type': 'issue_update',
+            'message': {
+                'action': 'created' if created else 'updated',
+                'issue': instance.to_dict()
+            }
+        }
+    )

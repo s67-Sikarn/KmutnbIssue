@@ -245,3 +245,28 @@ function showToast(ico, msg) {
 
 /* ── INIT: ดึงข้อมูลตอนเปิดหน้า ───────────────────────────────── */
 renderFeed(issues, false);
+
+/* ── WEBSOCKET: Real-time Updates ───────────────────────────────────────── */
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const issueSocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/issues/');
+
+issueSocket.onmessage = function (e) {
+  const data = JSON.parse(e.data);
+  const msg = data.message;
+
+  if (msg.action === 'created') {
+    issues.unshift(msg.issue); // Add to beginning
+  } else if (msg.action === 'updated') {
+    const idx = issues.findIndex(i => i.id === msg.issue.id);
+    if (idx !== -1) {
+      issues[idx] = msg.issue;
+    }
+  }
+
+  // Re-render and apply seamless update logic
+  onLocChange();
+};
+
+issueSocket.onclose = function (e) {
+  console.error('Issue socket closed unexpectedly');
+};
