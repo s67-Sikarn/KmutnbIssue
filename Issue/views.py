@@ -6,6 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.utils.timesince import timesince
 from django.utils import timezone
 from django.db.models import Q
+from django.http import JsonResponse
 from .models import Issue
 
 def index(request):
@@ -20,15 +21,25 @@ def index(request):
         
         # ตรวจสอบความถูกต้องของข้อมูล (หมวดหมู่และรายละเอียดเป็นสิ่งที่ต้องมี)
         if not category or not desc:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Category and Description are required fields.'}, status=400)
             messages.error(request, 'Category and Description are required fields.')
         else:
             # สร้างข้อความ title แบบย่อจากรายละเอียด (ดึงคำออกมา 6 คำแรก)
             words = desc.split()
             title = ' '.join(words[:6]) + ('...' if len(words) > 6 else '')
             # บันทึกข้อมูลลงฐานข้อมูล
-            Issue.objects.create(category=category, title=title, desc=desc, bld=bld, flr=flr, rm=rm)
-            messages.success(request, 'Issue submitted successfully!')
-            return redirect('Issue:index')
+            issue = Issue.objects.create(category=category, title=title, desc=desc, bld=bld, flr=flr, rm=rm)
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # Return JSON response for AJAX requests
+                return JsonResponse({
+                    'success': True,
+                    'issue': issue.to_dict()
+                })
+            else:
+                messages.success(request, 'Issue submitted successfully!')
+                return redirect('Issue:index')
             
     # ค้นหาปัญหาทั้งหมดเรียงตามเวลาที่สร้าง (ใหม่สุดขึ้นก่อน)
     issues = Issue.objects.all().order_by('-created_at')
