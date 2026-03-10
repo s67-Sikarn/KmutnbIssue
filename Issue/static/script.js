@@ -246,6 +246,47 @@ function showToast(ico, msg) {
 /* ── INIT: ดึงข้อมูลตอนเปิดหน้า ───────────────────────────────── */
 renderFeed(issues, false);
 
+/* ── ASYNC FORM SUBMISSION ───────────────────────────────────── */
+document.getElementById('issue-form').addEventListener('submit', async function(e) {
+  e.preventDefault(); // Prevent default form submission
+
+  const formData = new FormData(this);
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  try {
+    const response = await fetch('', {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Add new issue to the beginning of the issues array
+      issues.unshift(data.issue);
+      
+      // Clear the form
+      this.reset();
+      
+      // Show success toast
+      showToast('✅', 'Issue submitted successfully!');
+      
+      // Re-render the feed
+      onLocChange();
+    } else {
+      // Show error toast
+      showToast('⚠️', data.error || 'An error occurred while submitting the issue.');
+    }
+  } catch (error) {
+    console.error('Error submitting issue:', error);
+    showToast('⚠️', 'Network error. Please try again.');
+  }
+});
+
 /* ── WEBSOCKET: Real-time Updates ───────────────────────────────────────── */
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const issueSocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/issues/');
@@ -255,7 +296,11 @@ issueSocket.onmessage = function (e) {
   const msg = data.message;
 
   if (msg.action === 'created') {
-    issues.unshift(msg.issue); // Add to beginning
+    // Check if issue already exists to avoid duplication
+    const existingIndex = issues.findIndex(i => i.id === msg.issue.id);
+    if (existingIndex === -1) {
+      issues.unshift(msg.issue); // Add to beginning
+    }
   } else if (msg.action === 'updated') {
     const idx = issues.findIndex(i => i.id === msg.issue.id);
     if (idx !== -1) {
