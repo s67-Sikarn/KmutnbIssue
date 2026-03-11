@@ -154,7 +154,7 @@ body::before {
 
 /* คำอธิบายใต้หัวข้อ */
 .h-sub {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   font-weight: 400;
   letter-spacing: .3px;
@@ -180,7 +180,7 @@ body::before {
 
 .stripe-lbl {
   font-family: var(--fh);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 2.8px;
   text-transform: uppercase;
@@ -226,7 +226,7 @@ body::before {
   align-items: center;
   gap: 7px;
   font-family: var(--fh);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 1.8px;
   text-transform: uppercase;
@@ -275,7 +275,7 @@ body::before {
   border: none;
   box-shadow: var(--neu-in);
   font-family: var(--fb);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   color: var(--body);
   outline: none;
@@ -357,7 +357,7 @@ body::before {
   border-radius: var(--r-lg);
   box-shadow: var(--neu-lg);
   font-family: var(--fh);
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -449,7 +449,7 @@ body::before {
 
 .feed-title {
   font-family: var(--fh);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--navy);
   letter-spacing: -.3px;
@@ -527,7 +527,7 @@ body::before {
 
 .ic-title {
   font-family: var(--fh);
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--navy);
   line-height: 1.4;
@@ -562,7 +562,7 @@ body::before {
 
 /* รายละเอียดปัญหา */
 .ic-desc {
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.65;
   margin-bottom: 13px;

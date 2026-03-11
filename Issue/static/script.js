@@ -25,6 +25,9 @@ const FLRLBL = v => ({ B: 'Basement', G: 'Ground Floor' }[v] || (v ? 'Floor ' + 
 const RMLBL = v => v ? 'Room ' + v : '';
 
 let issues = [];
+let currentPage = 1;
+const ITEMS_PER_PAGE = 5;
+
 try {
   // ดึงข้อมูลปัญหาจาก <script id="issues-data">
   const dataEl = document.getElementById('issues-data');
@@ -201,9 +204,41 @@ function renderFeed(list, isFiltered) {
     return;
   }
 
-  body.innerHTML = list
+  // คำนวณจำนวนหน้าและรายการที่จะแสดงในหน้านี้
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  if (currentPage > totalPages) currentPage = totalPages || 1;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const pageItems = list.slice(startIndex, endIndex);
+
+  let htmlContent = pageItems
     .map((issue, i) => cardHTML(issue, i))
     .join('<div class="feed-divider"></div>');
+
+  // ถ้ามีมากกว่า 1 หน้า ให้เพิ่มส่วนควบคุมการแบ่งหน้า
+  if (totalPages > 1) {
+    htmlContent += `
+      <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+        <button onclick="changePage(-1)" class="btn-pagination" style="background: var(--surface); border: none; padding: 8px 16px; border-radius: 8px; box-shadow: var(--neu-sm); cursor: pointer; color: var(--navy); font-weight: 600; font-size: 14px;" ${currentPage === 1 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+          <i class="fas fa-chevron-left"></i> Prev
+        </button>
+        <span class="page-info" style="font-size: 14px; color: var(--muted); font-weight: 500;">Page ${currentPage} of ${totalPages}</span>
+        <button onclick="changePage(1)" class="btn-pagination" style="background: var(--surface); border: none; padding: 8px 16px; border-radius: 8px; box-shadow: var(--neu-sm); cursor: pointer; color: var(--navy); font-weight: 600; font-size: 14px;" ${currentPage === totalPages ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    `;
+  }
+
+  body.innerHTML = htmlContent;
+}
+
+// ฟังก์ชันเปลี่ยนหน้า
+window.changePage = function(delta) {
+  currentPage += delta;
+  onLocChange(); // รีเรนเดอร์ข้อมูลโดยใช้ตัวกรองเดิม
 }
 
 /* ── ฟังก์ชันตอบสนองการค้นหา / เลือกสถานที่ ─────────────────── */
@@ -228,6 +263,13 @@ function onLocChange() {
   });
 
   const isFiltered = !!(bld || flr || rm || term);
+  
+  // รีเซ็ตหน้ากลับไปเป็นหน้าแรกถ้าพิมพ์ค้นหาหรือเปลี่ยนตัวกรอง (ทำตอนที่มี event target)
+  // แต่ถ้าเรียกผ่าน changePage จะไม่ถูกรีเซ็ต
+  if (event && event.type !== 'click' && event.type !== 'undefined') {
+      currentPage = 1;
+  }
+
   renderFeed(filtered, isFiltered);
 }
 
