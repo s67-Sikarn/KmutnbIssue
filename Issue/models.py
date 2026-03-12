@@ -38,6 +38,7 @@ class Issue(models.Model):
     rm = models.CharField(max_length=50)  # ห้อง
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending') # สถานะเริ่มต้นคือ pending
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_issues') # เจ้าหน้าที่ผู้รับผิดชอบ
+    image = models.ImageField(upload_to='issue_images/', blank=True, null=True) # รูปภาพประกอบปัญหา
     rejection_reason = models.TextField(blank=True, null=True) # เหตุผลที่ปฏิเสธปัญหา
     created_at = models.DateTimeField(auto_now_add=True) # เวลาที่สร้างปัญหา
     in_progress_at = models.DateTimeField(null=True, blank=True) # เวลาที่เริ่มดำเนินการ
@@ -64,6 +65,7 @@ class Issue(models.Model):
             'created_at_time': timezone.localtime(self.created_at).strftime('%b %d, %Y | %H:%M') if self.created_at else '',
             'in_progress_at_time': timezone.localtime(self.in_progress_at).strftime('%b %d, %Y | %H:%M') if self.in_progress_at else '',
             'resolved_at_time': timezone.localtime(self.resolved_at).strftime('%b %d, %Y | %H:%M') if self.resolved_at else '',
+                'image_url': self.image.url if self.image else None,
         }
 
 @receiver(post_save, sender=Issue)

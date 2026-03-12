@@ -1,3 +1,75 @@
+/* ─── MODAL IMAGE VIEWER ───────────────────────────── */
+.modal.fade {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1050;
+  background: rgba(0,0,0,0.35);
+  transition: opacity 0.3s;
+}
+.modal.show {
+  display: block;
+  opacity: 1;
+}
+.modal-dialog {
+  max-width: 500px;
+  margin: 2rem auto;
+}
+.modal-content {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  background: #fff;
+}
+.modal-header {
+  border-bottom: 1px solid #eee;
+  padding: 1rem 1.2rem;
+}
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.modal-body {
+  padding: 1.2rem;
+}
+.modal-body img.img-fluid {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #888;
+  cursor: pointer;
+}
+.modal-backdrop.fade {
+  display: none;
+}
+.modal-backdrop.show {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.35);
+  z-index: 1040;
+}
+/* Responsive modal image */
+@media (max-width: 600px) {
+  .modal-dialog {
+    max-width: 95vw;
+    margin: 1rem auto;
+  }
+  .modal-body img.img-fluid {
+    max-height: 250px;
+  }
+}
 /* ─── RESET ───────────────────────────────────────── */
 /* รีเซ็ตค่าเริ่มต้นของเบราว์เซอร์ให้เหมือนกันหมด */
 *,
