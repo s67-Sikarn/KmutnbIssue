@@ -10,13 +10,13 @@ const CAT = {
   other: { label: 'Other', color: '#94A3B8', icon: '📌' },
 };
 
-// ข้อมูลสถานะ เปลี่ยน label ให้เป็นภาษาไทย
+// ข้อมูลสถานะ
 const STATUS = {
-  pending: { label: 'Pending', color: '#10B981' }, // สีเขียวมิ้นต์เหมือนในภาพ
+  pending: { label: 'Pending', color: '#10B981' },
   progress: { label: 'In Progress', color: '#10B981' },
-  hold: { label: 'On Hold', color: '#F59E0B' }, // สีส้ม
+  hold: { label: 'On Hold', color: '#F59E0B' },
   resolved: { label: 'Resolved', color: '#10B981' },
-  rejected: { label: 'Rejected', color: '#EF4444' }, // สีแดง
+  rejected: { label: 'Rejected', color: '#EF4444' },
 };
 
 // ฟังก์ชันปรับแต่งชื่อสถานที่
@@ -29,7 +29,6 @@ let currentPage = 1;
 const ITEMS_PER_PAGE = 5;
 
 try {
-  // ดึงข้อมูลปัญหาจาก <script id="issues-data">
   const dataEl = document.getElementById('issues-data');
   if (dataEl && dataEl.textContent.trim()) {
     issues = JSON.parse(dataEl.textContent);
@@ -38,11 +37,89 @@ try {
   console.error("Error parsing backend issues:", e);
 }
 
+// Escape a string for safe embedding
+function escapeJs(unsafe) {
+  if (unsafe === null || unsafe === undefined) return '';
+  return String(unsafe)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
+
+// Global modal controller
+function openImageModal(imgUrl, title) {
+  const imgEl = document.getElementById('imageModalImg');
+  const titleEl = document.getElementById('imageModalLabel');
+  if (imgEl) imgEl.src = imgUrl || '';
+  if (titleEl) titleEl.textContent = title || 'Issue Image';
+
+  const modalEl = document.getElementById('imageModal');
+  if (modalEl && window.bootstrap && typeof bootstrap.Modal === 'function') {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+  } else {
+    createFallbackModal(imgUrl, title);
+  }
+}
+
+function closeImageModal() {
+  const modalEl = document.getElementById('imageModal');
+  if (modalEl && window.bootstrap && typeof bootstrap.Modal === 'function') {
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+  }
+  const fb = document.getElementById('feed-image-backdrop');
+  if (fb) fb.remove();
+  const fmod = document.getElementById('feed-image-modal');
+  if (fmod) fmod.remove();
+}
+
+function createFallbackModal(imgUrl, title) {
+  if (document.getElementById('feed-image-modal')) return;
+  const backdrop = document.createElement('div');
+  backdrop.id = 'feed-image-backdrop';
+  backdrop.style.position = 'fixed';
+  backdrop.style.inset = '0';
+  backdrop.style.background = 'rgba(0,0,0,0.8)';
+  backdrop.style.zIndex = '1050';
+
+  const modal = document.createElement('div');
+  modal.id = 'feed-image-modal';
+  modal.style.position = 'fixed';
+  modal.style.left = '50%';
+  modal.style.top = '50%';
+  modal.style.transform = 'translate(-50%, -50%)';
+  modal.style.zIndex = '1060';
+  modal.style.maxWidth = '90%';
+  modal.style.maxHeight = '90%';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.alignItems = 'center';
+
+  const img = document.createElement('img');
+  img.src = imgUrl || '';
+  img.style.maxHeight = '80vh';
+  img.style.width = 'auto';
+  img.style.borderRadius = '8px';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.className = 'btn btn-secondary';
+  closeBtn.style.marginTop = '10px';
+  closeBtn.onclick = () => { backdrop.remove(); modal.remove(); };
+
+  modal.appendChild(img);
+  modal.appendChild(closeBtn);
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+}
+
 /* ── ฟังก์ชันสร้าง UI สถานะ (TIMELINE) ───────────────────── */
 function getTimelineHTML(issue) {
   const statusVal = issue.status;
   let step = 1;
-  let sColor = '#9CA3AF'; // Pending/Neutral color
+  let sColor = '#9CA3AF';
 
   let step3Label = 'Resolved';
   let step3StatusClass = 'status-resolved';
@@ -50,25 +127,23 @@ function getTimelineHTML(issue) {
 
   if (statusVal === 'progress') {
     step = 2;
-    sColor = '#3B82F6'; // In Progress
+    sColor = '#3B82F6';
   }
   else if (statusVal === 'resolved') {
     step = 3;
-    sColor = '#10B981'; // Done
+    sColor = '#10B981';
   }
   else if (statusVal === 'rejected') {
     step = 3;
-    sColor = '#EF4444'; // Red for Rejected
+    sColor = '#EF4444';
     step3Label = 'Rejected';
     step3StatusClass = 'status-rejected';
   }
   else if (statusVal === 'hold') {
-    // Keep hold standard or orange
     step = 2;
     sColor = '#F59E0B';
   }
 
-  // คำนวณความกว้างของขีดความคืบหน้า
   const wPercent = (step === 1) ? '0%' : (step === 2) ? '50%' : '100%';
 
   return `
@@ -76,7 +151,6 @@ function getTimelineHTML(issue) {
       <div class="tl-track-bg"></div>
       <div class="tl-track-fill" style="width: ${wPercent}; background: currentColor;"></div>
       <div class="tl-steps-row">
-        
         <div class="tl-step status-pending ${step >= 1 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 1 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
              ${step >= 1 ? '<i class="fas fa-circle" style="font-size: 6px;"></i>' : ''}
@@ -84,7 +158,6 @@ function getTimelineHTML(issue) {
           <div class="tl-label">Pending</div>
           <div class="tl-timestamp">${issue.created_at_time || '-'}</div>
         </div>
-        
         <div class="tl-step status-progress ${step >= 2 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 2 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
               ${step >= 2 && statusVal !== 'hold' ? '<i class="fas fa-spinner" style="font-size: 8px;"></i>' : ''}
@@ -93,7 +166,6 @@ function getTimelineHTML(issue) {
           <div class="tl-label">${statusVal === 'hold' ? 'On Hold' : 'In Progress'}</div>
           <div class="tl-timestamp">${issue.in_progress_at_time || '-'}</div>
         </div>
-        
         <div class="tl-step ${step3StatusClass} ${step >= 3 ? 'active' : ''}">
           <div class="tl-icon-box" style="${step >= 3 ? 'background:currentColor; border-color:currentColor; color:#fff;' : ''}">
               ${step >= 3 && statusVal === 'resolved' ? '<i class="fas fa-check" style="font-size: 9px;"></i>' : ''}
@@ -102,16 +174,13 @@ function getTimelineHTML(issue) {
           <div class="tl-label">${step3Label}</div>
           <div class="tl-timestamp">${step3Time || '-'}</div>
         </div>
-
       </div>
     </div>
   `;
 }
-// ฟังก์ชันสร้าง UI สำหรับแต่ละปัญหา
+
 function cardHTML(issue, idx) {
   const cat = CAT[issue.category] || CAT.other;
-
-  // Check if rejected to display it in place of timeline
   const statusVal = issue.status;
   const isRejected = statusVal === 'rejected';
 
@@ -123,15 +192,9 @@ function cardHTML(issue, idx) {
   else if (statusVal === 'rejected') { sColor = '#EF4444'; statusLabel = 'Rejected'; }
   else if (statusVal === 'hold') { sColor = '#F59E0B'; statusLabel = 'On Hold'; }
 
-  // ป้องกัน XSS
   function escapeHtml(unsafe) {
     if (!unsafe) return '';
-    return unsafe
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
   return `
@@ -141,12 +204,19 @@ function cardHTML(issue, idx) {
         <div class="cat-badge"><div class="cdot"></div>${cat.label}</div>
       </div>
       <p class="ic-desc">${escapeHtml(issue.desc)}</p>
-      <!-- ตำแหน่งข้อมูลด้านล่าง พร้อม Timeline ชิดขวา -->
+      
       <div class="ic-foot flex-col !items-start gap-3 mt-4">
-        <div class="w-full flex justify-between items-center gap-3">
-            <div class="flex flex-col gap-1.5 min-w-0 text-xs text-gray-500">
+        <div class="w-full flex justify-between items-start gap-3">
+            <div class="flex flex-col gap-2 min-w-0 text-xs text-gray-500">
                 <span class="truncate"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
                 <span class="truncate text-gray-400"><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
+                
+                ${(issue.image_url || issue.image) ? `
+                    <button type="button" class="view-photo-btn self-start mt-1 inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-medium shadow-sm hover:bg-blue-700 transition-colors" 
+                        onclick="event.stopPropagation(); openImageModal('${escapeJs(issue.image_url || issue.image)}','${escapeJs(issue.title || '')}')">
+                      <i class='fas fa-image mr-1.5'></i> View Photo
+                    </button>
+                ` : `<div class='text-gray-400 italic text-[11px] mt-1'><i class='fas fa-image-slash mr-1'></i> No Photo</div>`}
             </div>
             
             <div class="flex items-center gap-2 shrink-0">
@@ -175,27 +245,33 @@ function cardHTML(issue, idx) {
     </div>`;
 }
 
-/* ── RENDER FEED (ดึงข้อมูลแสดงผล) ────────────────────────── */
+/* ── RENDER FEED ────────────────────────── */
 function renderFeed(list, isFiltered) {
-  document.getElementById('feed-count').textContent = list.length;
-  // แปลส่วนหัวเป็นภาษาไทย
-  document.getElementById('feed-title').textContent = isFiltered ? 'Issues at Selected Location' : 'All Reported Issues';
+  const feedCountEl = document.getElementById('feed-count');
+  const feedBody = document.getElementById('feed-body');
+  if (!feedCountEl || !feedBody) return;
 
-  const bld = document.getElementById('bld').value;
-  const flr = document.getElementById('flr').value;
-  const rm = document.getElementById('rm').value;
+  feedCountEl.textContent = list.length;
+  const feedTitleEl = document.getElementById('feed-title');
+  if (feedTitleEl) feedTitleEl.textContent = isFiltered ? 'Issues at Selected Location' : 'All Reported Issues';
 
+  const bldEl = document.getElementById('bld');
+  const flrEl = document.getElementById('flr');
+  const rmEl = document.getElementById('rm');
+  const bld = bldEl ? bldEl.value : '';
+  const flr = flrEl ? flrEl.value : '';
+  const rm = rmEl ? rmEl.value : '';
+
+  const feedLocEl = document.getElementById('feed-loc-text');
   if (!isFiltered) {
-    document.getElementById('feed-loc-text').textContent = 'All Locations';
+    if (feedLocEl) feedLocEl.textContent = 'All Locations';
   } else {
     const parts = [bld && BLDLBL(bld), flr && FLRLBL(flr), rm && RMLBL(rm)].filter(Boolean);
-    document.getElementById('feed-loc-text').textContent = parts.join(' · ') || 'All Locations';
+    if (feedLocEl) feedLocEl.textContent = parts.join(' · ') || 'All Locations';
   }
 
-  const body = document.getElementById('feed-body');
-
   if (list.length === 0) {
-    body.innerHTML = `
+    feedBody.innerHTML = `
       <div class="empty">
         <div class="empty-orb">✅</div>
         <div class="empty-ttl">No Issues Found Here</div>
@@ -204,7 +280,6 @@ function renderFeed(list, isFiltered) {
     return;
   }
 
-  // คำนวณจำนวนหน้าและรายการที่จะแสดงในหน้านี้
   const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
   if (currentPage > totalPages) currentPage = totalPages || 1;
   if (currentPage < 1) currentPage = 1;
@@ -217,7 +292,6 @@ function renderFeed(list, isFiltered) {
     .map((issue, i) => cardHTML(issue, i))
     .join('<div class="feed-divider"></div>');
 
-  // ถ้ามีมากกว่า 1 หน้า ให้เพิ่มส่วนควบคุมการแบ่งหน้า
   if (totalPages > 1) {
     htmlContent += `
       <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
@@ -232,48 +306,34 @@ function renderFeed(list, isFiltered) {
     `;
   }
 
-  body.innerHTML = htmlContent;
+  feedBody.innerHTML = htmlContent;
 }
 
-// ฟังก์ชันเปลี่ยนหน้า
 window.changePage = function(delta) {
   currentPage += delta;
-  onLocChange(); // รีเรนเดอร์ข้อมูลโดยใช้ตัวกรองเดิม
+  onLocChange();
 }
 
-/* ── ฟังก์ชันตอบสนองการค้นหา / เลือกสถานที่ ─────────────────── */
 function onLocChange() {
-  const bld = document.getElementById('bld').value;
-  const flr = document.getElementById('flr').value;
-  const rm = document.getElementById('rm').value;
+  const bldEl = document.getElementById('bld');
+  const flrEl = document.getElementById('flr');
+  const rmEl = document.getElementById('rm');
+  const bld = bldEl ? bldEl.value : '';
+  const flr = flrEl ? flrEl.value : '';
+  const rm = rmEl ? rmEl.value : '';
   const searchInput = document.getElementById('search-issue');
   const term = searchInput ? searchInput.value.toLowerCase() : '';
 
-  // กรองปัญหาตาม โลเคชั่น และ คำค้นหา
   const filtered = issues.filter(i => {
-    const matchLoc = (!bld || i.bld === bld) &&
-      (!flr || i.flr === flr) &&
-      (!rm || i.rm === rm);
-
-    const matchTerm = !term ||
-      (i.title && i.title.toLowerCase().includes(term)) ||
-      (i.desc && String(i.desc).toLowerCase().includes(term));
-
+    const matchLoc = (!bld || i.bld === bld) && (!flr || i.flr === flr) && (!rm || i.rm === rm);
+    const matchTerm = !term || (i.title && i.title.toLowerCase().includes(term)) || (i.desc && String(i.desc).toLowerCase().includes(term));
     return matchLoc && matchTerm;
   });
 
   const isFiltered = !!(bld || flr || rm || term);
-  
-  // รีเซ็ตหน้ากลับไปเป็นหน้าแรกถ้าพิมพ์ค้นหาหรือเปลี่ยนตัวกรอง (ทำตอนที่มี event target)
-  // แต่ถ้าเรียกผ่าน changePage จะไม่ถูกรีเซ็ต
-  if (event && event.type !== 'click' && event.type !== 'undefined') {
-      currentPage = 1;
-  }
-
   renderFeed(filtered, isFiltered);
 }
 
-/* ── TOAST แจ้งเตือน ─────────────────────────────────────── */
 let _toastTimer;
 function showToast(ico, msg) {
   const el = document.getElementById('toast');
@@ -285,75 +345,46 @@ function showToast(ico, msg) {
   _toastTimer = setTimeout(() => el.classList.remove('on'), 3500);
 }
 
-/* ── INIT: ดึงข้อมูลตอนเปิดหน้า ───────────────────────────────── */
 renderFeed(issues, false);
 
-/* ── ASYNC FORM SUBMISSION ───────────────────────────────────── */
-document.getElementById('issue-form').addEventListener('submit', async function(e) {
-  e.preventDefault(); // Prevent default form submission
-
-  const formData = new FormData(this);
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-  try {
-    const response = await fetch('', {
-      method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRFToken': csrfToken,
-      },
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      // Add new issue to the beginning of the issues array
-      issues.unshift(data.issue);
-      
-      // Clear the form
-      this.reset();
-      
-      // Show success toast
-      showToast('✅', 'Issue submitted successfully!');
-      
-      // Re-render the feed
-      onLocChange();
-    } else {
-      // Show error toast
-      showToast('⚠️', data.error || 'An error occurred while submitting the issue.');
+const issueForm = document.getElementById('issue-form');
+if (issueForm) {
+  issueForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    try {
+      const response = await fetch('', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken },
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+          // issues.unshift(data.issue); <--- ลบบรรทัดนี้ออก (หรือ Comment ไว้)
+          this.reset();
+          showToast('✅', 'Issue submitted successfully!');
+          // onLocChange(); <--- ลบบรรทัดนี้ออกด้วย ถ้าคุณใช้ WebSocket อยู่แล้ว
+      }else {
+        showToast('⚠️', data.error || 'An error occurred.');
+      }
+    } catch (error) {
+      showToast('⚠️', 'Network error.');
     }
-  } catch (error) {
-    console.error('Error submitting issue:', error);
-    showToast('⚠️', 'Network error. Please try again.');
-  }
-});
+  });
+}
 
-/* ── WEBSOCKET: Real-time Updates ───────────────────────────────────────── */
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const issueSocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/issues/');
 
 issueSocket.onmessage = function (e) {
   const data = JSON.parse(e.data);
   const msg = data.message;
-
   if (msg.action === 'created') {
-    // Check if issue already exists to avoid duplication
-    const existingIndex = issues.findIndex(i => i.id === msg.issue.id);
-    if (existingIndex === -1) {
-      issues.unshift(msg.issue); // Add to beginning
-    }
+    if (issues.findIndex(i => i.id === msg.issue.id) === -1) issues.unshift(msg.issue);
   } else if (msg.action === 'updated') {
     const idx = issues.findIndex(i => i.id === msg.issue.id);
-    if (idx !== -1) {
-      issues[idx] = msg.issue;
-    }
+    if (idx !== -1) issues[idx] = msg.issue;
   }
-
-  // Re-render and apply seamless update logic
   onLocChange();
-};
-
-issueSocket.onclose = function (e) {
-  console.error('Issue socket closed unexpectedly');
 };

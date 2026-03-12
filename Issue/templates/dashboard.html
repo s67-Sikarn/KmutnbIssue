@@ -1,227 +1,139 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Dashboard - KMUTNB Issue Tracker</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        // ฟังก์ชันเพื่อแสดงซ่อนช่องกรอกเหตุผลตอนกด Dropdown Reject (ของเก่า)
-        function handleStatusChange(selectEl, issueId) {
-            const val = selectEl.value;
-            const container = document.getElementById('reject-container-' + issueId);
-            const input = document.getElementById('reject-input-' + issueId);
-
-            if (val === 'rejected') {
-                container.classList.remove('hidden');
-                input.required = true;
-            } else {
-                container.classList.add('hidden');
-                input.required = false;
-                input.value = '';
-            }
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    
+    <style>
+        #imageModalImg {
+            max-height: 75vh;
+            object-fit: contain;
         }
-    </script>
+        /* ลบ Cursor Pointer ออกเพราะไม่ต้องกดขยายแล้ว */
+        .ic { cursor: default; }
+    </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- Navbar -->
     <nav class="bg-blue-600 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <span class="text-white text-xl font-bold tracking-tight">KMUTNB <span class="text-blue-200">Staff
-                            Dashboard</span></span>
+                    <span class="text-white text-xl font-bold tracking-tight">KMUTNB <span class="text-blue-200">Staff Dashboard</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-white text-sm">Logged in as: <span
-                            class="font-semibold">{{request.user.username}}</span></span>
-                    <a href="/"
-                        class="text-blue-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">View
-                        Main Page</a>
+                    <span class="text-white text-sm">Logged in as: <span class="font-semibold">{{request.user.username}}</span></span>
+                    <a href="/" class="text-blue-100 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition">View Main Page</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- ส่วนเนื้อหาหลัก -->
     <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div class="mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
             <h1 class="text-2xl font-bold text-gray-900">Issue Management</h1>
             <div class="flex items-center gap-4">
                 <form method="GET" action="{% url 'Issue:dashboard' %}" class="flex flex-wrap items-center gap-4">
                     <div class="flex items-center gap-2">
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-gray-400"></i>
-                            </div>
-                            <input type="text" name="q" value="{{ search_query }}" placeholder="Search issues..."
-                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm">
-                        </div>
-                        <button type="submit"
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Search
-                        </button>
+                        <input type="text" name="q" value="{{ search_query }}" placeholder="Search issues..."
+                            class="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500">
+                        <button type="submit" class="px-3 py-2 text-white bg-blue-600 rounded-md text-sm font-medium">Search</button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <select name="status" id="status-filter" onchange="this.form.submit()"
-                            class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-gray-700 font-medium">
-                            <option value="">Filter by Status: All Active</option>
-                            {% for value, label in status_choices %}
+                    <select name="status" onchange="this.form.submit()" class="pl-3 pr-10 py-2 text-sm border-gray-300 rounded-md border text-gray-700">
+                        <option value="">Filter Status: All Active</option>
+                        {% for value, label in status_choices %}
                             {% if value != 'hold' %}
-                            <option value="{{ value }}" {% if current_filter == value %}selected{% endif %}>{{ label }}
-                            </option>
+                            <option value="{{ value }}" {% if current_filter == value %}selected{% endif %}>{{ label }}</option>
                             {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
+                        {% endfor %}
+                    </select>
                 </form>
-                <span
-                    class="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded border border-blue-400 whitespace-nowrap">
-                    Total: {{ issues|length }}
-                </span>
             </div>
         </div>
-
-        <!-- Django Messages Alert -->
-        {% if messages %}
-        {% for message in messages %}
-        <div
-            class="mb-4 rounded-md p-4 {% if message.tags == 'error' %}bg-red-50 border-red-400 text-red-700{% else %}bg-green-50 border-green-400 text-green-700{% endif %} border">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    {% if message.tags == 'error' %}
-                    <i class="fas fa-exclamation-circle"></i>
-                    {% else %}
-                    <i class="fas fa-check-circle"></i>
-                    {% endif %}
-                </div>
-                <div class="ml-3">
-                    <p class="text-base font-medium">{{ message }}</p>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-        {% endif %}
 
         {% if issues %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for issue in issues %}
-            <div
-                class="bg-white overflow-hidden shadow rounded-lg border border-gray-200 flex flex-col hover:shadow-md transition">
-                <!-- Card Header -->
-                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-start bg-gray-50">
+            <div class="ic bg-white shadow rounded-lg border border-gray-200 flex flex-col hover:border-blue-300 transition">
+                
+                <div class="px-4 py-4 border-b border-gray-200 flex justify-between items-start bg-gray-50">
                     <div>
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 truncate pr-2 w-48"
-                            title="{{ issue.title }}">
-                            {{ issue.title }}
-                        </h3>
-                        <p class="mt-1 max-w-2xl text-xs text-gray-500 flex items-center gap-1">
-                            <i class="fas fa-tag"></i> {{ issue.get_category_display }}
-                        </p>
+                        <h3 class="text-md font-bold text-gray-900 truncate w-40" title="{{ issue.title }}">{{ issue.title }}</h3>
+                        <p class="mt-1 text-xs text-gray-500"><i class="fas fa-tag"></i> {{ issue.get_category_display }}</p>
                     </div>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            {% if issue.status == 'pending' %} bg-red-100 text-red-800 border border-red-200
-                            {% elif issue.status == 'progress' %} bg-blue-100 text-blue-800 border border-blue-200
-                            {% elif issue.status == 'hold' %} bg-yellow-100 text-yellow-800 border border-yellow-200
-                            {% elif issue.status == 'resolved' %} bg-green-100 text-green-800 border border-green-200
-                            {% elif issue.status == 'rejected' %} bg-gray-100 text-gray-800 border border-gray-300
-                            {% endif %}">
-                        <!-- ไอคอนสถานะแบบไม่มีแอนิเมชัน -->
-                        <i class="fas 
-                            {% if issue.status == 'progress' %}fa-tools
-                            {% elif issue.status == 'resolved' %}fa-check-circle
-                            {% elif issue.status == 'hold' %}fa-pause-circle
-                            {% elif issue.status == 'rejected' %}fa-times-circle
-                            {% else %}fa-exclamation-circle{% endif %} mr-1"></i>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border 
+                        {% if issue.status == 'pending' %} bg-red-50 text-red-700 border-red-200
+                        {% elif issue.status == 'progress' %} bg-blue-50 text-blue-700 border-blue-200
+                        {% elif issue.status == 'resolved' %} bg-green-50 text-green-700 border-green-200
+                        {% else %} bg-gray-50 text-gray-700 border-gray-200 {% endif %}">
                         {{ issue.get_status_display }}
                     </span>
                 </div>
 
-                <!-- ส่วนรายละเอียดปัญหาในการ์ด -->
-                <div class="px-4 py-5 sm:p-6 flex-grow">
-                    <div class="mb-3 flex items-center text-base text-gray-600 gap-2">
-                        <i class="fas fa-map-marker-alt text-red-500 w-4"></i>
-                        <span class="font-medium">Bld {{ issue.bld }} | Flr {{ issue.flr }} | Rm {{ issue.rm }}</span>
+                <div class="px-4 py-5 flex-grow">
+                    <div class="mb-3 flex items-center text-sm text-gray-600 gap-2 font-medium">
+                        <i class="fas fa-map-marker-alt text-red-500"></i>
+                        <span>Bld {{ issue.bld }} | Flr {{ issue.flr }} | Rm {{ issue.rm }}</span>
                     </div>
-                    <p class="text-base text-gray-700 bg-gray-50 p-3 rounded-md line-clamp-3" title="{{ issue.desc }}">
-                        "{{ issue.desc }}"
-                    </p>
+                    
+                    <p class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md italic mb-4">"{{ issue.desc }}"</p>
 
-                    <div class="mt-4 flex flex-col gap-1 text-sm text-gray-400">
-                        <span><i class="far fa-clock mr-1"></i> Reported: {{ issue.created_at|timesince }} ago</span>
+                    <div class="mb-4 pt-4 border-t border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Evidence</h4>
+                        {% if issue.image %}
+                            <button type="button" 
+                                class="w-full inline-flex justify-center items-center px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-xs font-bold hover:bg-blue-600 hover:text-white transition"
+                                onclick="openImageModal('{{ issue.image.url|escapejs }}', '{{ issue.title|escapejs }}')">
+                                <i class="fas fa-image mr-2"></i> VIEW PHOTO
+                            </button>
+                        {% else %}
+                            <div class="w-full py-3 bg-gray-50 border border-dashed border-gray-200 rounded-md text-center">
+                                <span class="text-gray-400 text-xs italic"><i class="fas fa-image-slash mr-1"></i> No Image Attached</span>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-2 text-xs text-gray-500">
+                        <p><i class="far fa-clock mr-1"></i> {{ issue.created_at|timesince }} ago</p>
                         {% if issue.assigned_to %}
-                        <span class="text-blue-500 font-medium"><i class="fas fa-user mr-1"></i> Assigned to:
-                            {{issue.assigned_to.username }}</span>
+                            <p class="text-blue-600 font-medium"><i class="fas fa-user-shield mr-1"></i> Assigned: {{ issue.assigned_to.username }}</p>
                         {% endif %}
                         {% if issue.rejection_reason %}
-                        <span
-                            class="text-gray-600 font-medium mt-1 bg-gray-100 p-2 rounded border border-gray-200 block">
-                            <i class="fas fa-comment-dots mr-1"></i> Reason: {{ issue.rejection_reason }}
-                        </span>
+                            <p class="bg-red-50 p-2 rounded text-red-600"><i class="fas fa-comment-slash mr-1"></i> {{ issue.rejection_reason }}</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- ส่วนปุ่มจัดการสถานะ (Footer ของการ์ด) -->
-                <div class="px-4 py-4 sm:px-6 border-t border-gray-200 flex flex-col gap-3">
+                <div class="px-4 py-4 border-t border-gray-200 bg-gray-50/50">
                     {% if issue.status == 'pending' %}
-                    <!-- กรณีเป็น Pending จะมีปุ่ม Accept และ Reject -->
-                    <div class="flex gap-2 w-full">
+                    <div class="flex gap-2">
                         <form method="POST" action="{% url 'Issue:update_status' issue.id %}" class="flex-1">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="accept">
-                            <button type="submit"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition">
-                                <i class="fas fa-check mr-2"></i> Accept
-                            </button>
+                            {% csrf_token %}<input type="hidden" name="action" value="accept">
+                            <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-md text-sm font-bold hover:bg-blue-700 transition">Accept</button>
                         </form>
-                        <button type="button"
-                            onclick="document.getElementById('reject-form-{{ issue.id }}').classList.toggle('hidden')"
-                            class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 transition">
-                            <i class="fas fa-times mr-2 text-red-500"></i> Reject
-                        </button>
+                        <button onclick="document.getElementById('reject-form-{{ issue.id }}').classList.toggle('hidden')" class="flex-1 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-bold hover:bg-gray-50 transition">Reject</button>
                     </div>
-                    <!-- ฟอร์มกรอกเหตุผลเมื่อกด Reject -->
-                    <form id="reject-form-{{ issue.id }}" method="POST"
-                        action="{% url 'Issue:update_status' issue.id %}" class="hidden flex flex-col gap-2 mt-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="reject">
-                        <textarea name="rejection_reason" rows="2" required
-                            class="shadow-sm focus:ring-red-500 focus:border-red-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border bg-gray-50"
-                            placeholder="Please provide a reason for rejection..."></textarea>
-                        <button type="submit"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition">
-                            Confirm Reject
-                        </button>
+                    <form id="reject-form-{{ issue.id }}" method="POST" action="{% url 'Issue:update_status' issue.id %}" class="hidden mt-3 space-y-2">
+                        {% csrf_token %}<input type="hidden" name="action" value="reject">
+                        <textarea name="rejection_reason" rows="2" required class="w-full text-sm border-gray-300 rounded-md p-2" placeholder="Reason for rejection..."></textarea>
+                        <button type="submit" class="w-full py-2 bg-red-600 text-white rounded-md text-xs font-bold">Confirm Reject</button>
                     </form>
-
                     {% elif issue.status == 'progress' %}
-                    <!-- กรณี In Progress จะเห็นปุ่ม Complete อย่างเดียวให้กดง่ายๆ -->
                     <form method="POST" action="{% url 'Issue:update_status' issue.id %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="complete">
-                        <button type="submit"
-                            class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition">
-                            <i class="fas fa-check-circle mr-2"></i> Complete
-                        </button>
+                        {% csrf_token %}<input type="hidden" name="action" value="complete">
+                        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-md text-sm font-bold hover:bg-green-700 transition">Complete</button>
                     </form>
-
                     {% else %}
-                    <!-- กรณีอื่นๆ (เช่น Hold หรือ Resolved/Rejected) จะแสดงสถานะสำเร็จให้ทราบ ไม่ให้แก้ไขแล้ว -->
-                    <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-md p-3">
-                        <span class="text-base font-medium text-gray-700">Action:</span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium 
-                            {% if issue.status == 'resolved' %} bg-green-100 text-green-800 border border-green-200
-                            {% elif issue.status == 'rejected' %} bg-gray-100 text-gray-800 border border-gray-300
-                            {% endif %}">
-                            {{ issue.get_status_display }}
-                        </span>
+                    <div class="text-center py-2 text-sm font-bold text-gray-400 bg-gray-100 rounded border border-gray-200">
+                        {{ issue.get_status_display|upper }}
                     </div>
                     {% endif %}
                 </div>
@@ -229,62 +141,38 @@
             {% endfor %}
         </div>
         {% else %}
-        <!-- Empty State -->
         <div class="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
-            <i class="fas fa-check-circle text-5xl text-green-400 mb-4"></i>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">All caught up!</h3>
-            <p class="mt-1 text-sm text-gray-500">There are currently no active issues assigned to the building.</p>
+            <i class="fas fa-clipboard-check text-5xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900">No issues found</h3>
         </div>
         {% endif %}
     </main>
 
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-gray-900 border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-white text-sm font-bold" id="imageModalLabel">Evidence Detail</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img id="imageModalImg" src="" class="img-fluid rounded shadow-lg mx-auto">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const dashboardSocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/issues/');
-
-        dashboardSocket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            const msg = data.message;
-
-            if (msg.action === 'created') {
-                // Show success toast for new issue
-                showToast('✅', 'New issue reported!');
-                // Reload the page to update the list
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        };
-
-        dashboardSocket.onclose = function (e) {
-            console.error('Issue socket closed unexpectedly');
-        };
-
-        // Toast function for dashboard
-        let toastTimer;
-        function showToast(icon, message) {
-            // Create toast element if it doesn't exist
-            let toast = document.getElementById('dashboard-toast');
-            if (!toast) {
-                toast = document.createElement('div');
-                toast.id = 'dashboard-toast';
-                toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50 transition-opacity duration-300 opacity-0';
-                toast.innerHTML = '<div class="flex items-center gap-2"><span id="toast-icon"></span><span id="toast-message"></span></div>';
-                document.body.appendChild(toast);
-            }
-            
-            document.getElementById('toast-icon').textContent = icon;
-            document.getElementById('toast-message').textContent = message;
-            toast.classList.remove('opacity-0');
-            toast.classList.add('opacity-100');
-            
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0');
-            }, 3000);
+        function openImageModal(url, title) {
+            const modalEl = document.getElementById('imageModal');
+            const modalImg = document.getElementById('imageModalImg');
+            const modalTitle = document.getElementById('imageModalLabel');
+            modalImg.src = url;
+            modalTitle.innerText = "Evidence: " + title;
+            const bsModal = new bootstrap.Modal(modalEl);
+            bsModal.show();
         }
     </script>
 </body>
-
 </html>

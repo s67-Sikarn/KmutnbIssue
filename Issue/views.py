@@ -18,6 +18,7 @@ def index(request):
         bld = request.POST.get('bld')
         flr = request.POST.get('flr')
         rm = request.POST.get('rm')
+        image = request.FILES.get('image')
         
         # ตรวจสอบความถูกต้องของข้อมูล (หมวดหมู่และรายละเอียดเป็นสิ่งที่ต้องมี)
         if not category or not desc:
@@ -29,7 +30,7 @@ def index(request):
             words = desc.split()
             title = ' '.join(words[:6]) + ('...' if len(words) > 6 else '')
             # บันทึกข้อมูลลงฐานข้อมูล
-            issue = Issue.objects.create(category=category, title=title, desc=desc, bld=bld, flr=flr, rm=rm)
+            issue = Issue.objects.create(category=category, title=title, desc=desc, bld=bld, flr=flr, rm=rm, image=image)
             
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 # Return JSON response for AJAX requests
@@ -65,6 +66,7 @@ def index(request):
             'created_at_time': timezone.localtime(issue.created_at).strftime('%b %d, %Y | %H:%M') if issue.created_at else '',
             'in_progress_at_time': timezone.localtime(issue.in_progress_at).strftime('%b %d, %Y | %H:%M') if issue.in_progress_at else '',
             'resolved_at_time': timezone.localtime(issue.resolved_at).strftime('%b %d, %Y | %H:%M') if issue.resolved_at else '',
+            'image_url': issue.image.url if issue.image else None,
         })
         
     context = {
