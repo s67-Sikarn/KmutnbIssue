@@ -204,12 +204,21 @@ function cardHTML(issue, idx) {
         <div class="cat-badge"><div class="cdot"></div>${cat.label}</div>
       </div>
       <p class="ic-desc">${escapeHtml(issue.desc)}</p>
+      
       <div class="ic-foot flex-col !items-start gap-3 mt-4">
-        <div class="w-full flex justify-between items-center gap-3">
-            <div class="flex flex-col gap-1.5 min-w-0 text-xs text-gray-500">
+        <div class="w-full flex justify-between items-start gap-3">
+            <div class="flex flex-col gap-2 min-w-0 text-xs text-gray-500">
                 <span class="truncate"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Bld ${escapeHtml(issue.bld)} | Flr ${escapeHtml(issue.flr)} | Rm ${escapeHtml(issue.rm)}</span>
                 <span class="truncate text-gray-400"><i class="far fa-clock mr-1"></i> ${escapeHtml(issue.time)}</span>
+                
+                ${(issue.image_url || issue.image) ? `
+                    <button type="button" class="view-photo-btn self-start mt-1 inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-md text-[11px] font-medium shadow-sm hover:bg-blue-700 transition-colors" 
+                        onclick="event.stopPropagation(); openImageModal('${escapeJs(issue.image_url || issue.image)}','${escapeJs(issue.title || '')}')">
+                      <i class='fas fa-image mr-1.5'></i> View Photo
+                    </button>
+                ` : `<div class='text-gray-400 italic text-[11px] mt-1'><i class='fas fa-image-slash mr-1'></i> No Photo</div>`}
             </div>
+            
             <div class="flex items-center gap-2 shrink-0">
                 <div class="text-[11px] font-semibold flex items-center justify-center gap-1.5 py-1 px-3 rounded-full border" style="color: ${sColor}; border-color: ${sColor}50; background: ${sColor}15; min-width: 80px;">
                     ${statusLabel}
@@ -219,15 +228,9 @@ function cardHTML(issue, idx) {
                 </div>
             </div>
         </div>
+
         <div class="ic-timeline-container w-full overflow-hidden transition-all duration-300 max-h-0 opacity-0">
             <div class="pt-4 border-t border-gray-100 mt-2">
-                <div class="mb-4 w-full flex justify-center">
-                  ${(issue.image_url || issue.image) ? `
-                    <button type="button" class="view-photo-btn inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm shadow-md" onclick="event.stopPropagation();openImageModal('${escapeJs(issue.image_url || issue.image)}','${escapeJs(issue.title || '')}')">
-                      <i class='fas fa-image mr-2'></i> View Photo
-                    </button>
-                  ` : `<div class='text-gray-400 italic text-sm'>No photo provided</div>`}
-                </div>
                 <div class="flex justify-center w-full px-2">
                     ${getTimelineHTML(issue)}
                 </div>
@@ -242,7 +245,7 @@ function cardHTML(issue, idx) {
     </div>`;
 }
 
-/* ── RENDER FEED (แก้ไขจุดที่มีปัญหา ReferenceError: body is not defined) ────────────────────────── */
+/* ── RENDER FEED ────────────────────────── */
 function renderFeed(list, isFiltered) {
   const feedCountEl = document.getElementById('feed-count');
   const feedBody = document.getElementById('feed-body');
@@ -267,7 +270,6 @@ function renderFeed(list, isFiltered) {
     if (feedLocEl) feedLocEl.textContent = parts.join(' · ') || 'All Locations';
   }
 
-  // แก้ไขจุดที่ 1: เปลี่ยนจาก body.innerHTML เป็น feedBody.innerHTML
   if (list.length === 0) {
     feedBody.innerHTML = `
       <div class="empty">
@@ -304,7 +306,6 @@ function renderFeed(list, isFiltered) {
     `;
   }
 
-  // แก้ไขจุดที่ 2: เปลี่ยนจาก body.innerHTML เป็น feedBody.innerHTML (บรรทัดที่ 336)
   feedBody.innerHTML = htmlContent;
 }
 
