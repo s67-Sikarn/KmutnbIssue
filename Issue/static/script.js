@@ -361,11 +361,11 @@ if (issueForm) {
       });
       const data = await response.json();
       if (data.success) {
-        issues.unshift(data.issue);
-        this.reset();
-        showToast('✅', 'Issue submitted successfully!');
-        onLocChange();
-      } else {
+          // issues.unshift(data.issue); <--- ลบบรรทัดนี้ออก (หรือ Comment ไว้)
+          this.reset();
+          showToast('✅', 'Issue submitted successfully!');
+          // onLocChange(); <--- ลบบรรทัดนี้ออกด้วย ถ้าคุณใช้ WebSocket อยู่แล้ว
+      }else {
         showToast('⚠️', data.error || 'An error occurred.');
       }
     } catch (error) {
